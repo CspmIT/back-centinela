@@ -15,4 +15,11 @@ module.exports = {
 		INFLUX_ORG_ID: '9a05c7780ebb0dc1',
 		INFLUX_BUCKET: 'IOT-ENERGIA',
 	},
+	Sensors_Morteros: {
+		INFLUX_URL: 'http://200.63.120.50:18086',
+		INFLUXDB_TOKEN: 'dU_XBAIf38ZpMUnCl0uNhsah3XDVZ7I-bfg1VXG8eG8YMdtnhy7gggbq_8TL-MszLt8ZYxAg_8UwFNilKHlrOg==',
+		INFLUX_ORG: 'CoopMorteros',
+		INFLUX_ORG_ID: '28698fafe99fd9bf',
+		INFLUX_BUCKET: 'IOT',
+	},
 }

@@ -23,7 +23,6 @@
 		"jsonwebtoken": "^9.0.2",
 		"mqtt": "^5.10.1",
 		"mysql2": "^3.9.7",
-		"node-telegram-bot-api": "^0.63.0",
 		"passport": "^0.7.0",
 		"passport-jwt": "^4.0.1",
 		"sequelize": "^6.37.3",

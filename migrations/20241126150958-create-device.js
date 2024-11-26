@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
 	async up(queryInterface, Sequelize) {
-		await queryInterface.createTable('Nodes', {
+		await queryInterface.createTable('Devices', {
 			id: {
 				allowNull: false,
 				autoIncrement: true,
@@ -12,26 +12,19 @@ module.exports = {
 			name: {
 				type: Sequelize.STRING,
 			},
-			number: {
+			topic: {
 				type: Sequelize.STRING,
 			},
-			description: {
+			version_hardware: {
 				type: Sequelize.STRING,
 			},
-			lat_location: {
-				type: Sequelize.DECIMAL(11, 6),
+			version_software: {
+				type: Sequelize.STRING,
 			},
-			lng_location: {
-				type: Sequelize.DECIMAL(11, 6),
+			type_connect: {
+				type: Sequelize.STRING,
 			},
-			status: {
-				type: Sequelize.BOOLEAN,
-				defaultValue: 1,
-			},
-			type: {
-				type: Sequelize.INTEGER,
-				comment: '1: reconectador, 2: sub estación rural, 3: sub estación urbana, 4: otros dispositivos',
-			},
+
 			createdAt: {
 				allowNull: false,
 				type: Sequelize.DATE,
@@ -43,6 +36,6 @@ module.exports = {
 		})
 	},
 	async down(queryInterface, Sequelize) {
-		await queryInterface.dropTable('Nodes')
+		await queryInterface.dropTable('Devices')
 	},
 }

@@ -14,8 +14,8 @@ module.exports = {
 		// Capturar el esquema desde los argumentos
 		const schema = process.argv.find((item) => item.includes('nameSchema:'))?.split(':')?.[1] || ''
 		if (schema === '') throw new Error('Falta el schema de la base de datos!')
-		const token = await encrypt(telegramConf[schema].reconecta.token)
-		const chat = await encrypt(telegramConf[schema].reconecta.chatIdReconecta)
+		const token = await encrypt(telegramConf[schema].masagua.token)
+		const chat = await encrypt(telegramConf[schema].masagua.chatIdReconecta)
 		const host = await encrypt(config_Mqtt[schema].host)
 		const port = await encrypt(config_Mqtt[schema].port)
 		const password = await encrypt(config_Mqtt[schema].password)
