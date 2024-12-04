@@ -70,6 +70,7 @@ const loginCooptechExternal = async (req, res) => {
 		}
 	}
 }
+
 module.exports = {
 	relationUserCooptech,
 	loginCooptech,

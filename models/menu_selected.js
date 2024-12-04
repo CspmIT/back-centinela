@@ -11,7 +11,6 @@ module.exports = (sequelize, DataTypes) => {
 			// define association here
 			this.belongsTo(models.Menu, { foreignKey: 'id_menu', as: 'Menus' })
 			this.belongsTo(models.Profile, { foreignKey: 'id_profile', as: 'profils' })
-			// this.belongsTo(models.User, { foreignKey: 'id_user', as: 'users' })
 		}
 	}
 	Menu_selected.init(

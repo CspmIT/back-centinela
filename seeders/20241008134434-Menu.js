@@ -115,6 +115,18 @@ module.exports = {
 					createdAt: date,
 					updatedAt: date,
 				},
+				{
+					name: 'Diagramas',
+					link: 'config/diagram',
+					icon: 'BsFillDiagram3Fill',
+					level: '2',
+					group_menu: '4',
+					sub_menu: '4',
+					status: '1',
+					order: 11,
+					createdAt: date,
+					updatedAt: date,
+				},
 			],
 			{}
 		)

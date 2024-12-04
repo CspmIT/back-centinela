@@ -1,5 +1,10 @@
 const express = require('express')
-const { loginCooptech, relationUserCooptech, loginCooptechExternal } = require('../controllers/Cooptech.controller')
+const {
+	loginCooptech,
+	relationUserCooptech,
+	loginCooptechExternal,
+	LoginChangeApp,
+} = require('../controllers/Cooptech.controller')
 const router = express.Router()
 
 // RUTAS PARA AUTH
