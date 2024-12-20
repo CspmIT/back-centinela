@@ -9,6 +9,7 @@ const {
 	getPermission,
 	savePermission,
 	getProfiles,
+	getListUserPass,
 } = require('../controllers/User.controller')
 const router = express.Router()
 
@@ -16,6 +17,7 @@ router.post('/saveConfigTable', verifyToken, saveConfigTable)
 router.post('/getColumnsTable', verifyToken, getColumnsUserTable)
 router.get('/listUsers', verifyToken, getListUser)
 router.get('/listProfiles', verifyToken, getProfiles)
+router.get('/listUsersPass', verifyToken, getListUserPass)
 
 router.get('/getAllMenu', verifyToken, getAllMenu)
 router.post('/saveMenu', verifyToken, abmMenu)
