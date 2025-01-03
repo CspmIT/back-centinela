@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
 		{
 			name: DataTypes.STRING,
 			unit: DataTypes.STRING,
+			type: DataTypes.STRING,
 			calc: DataTypes.BOOLEAN,
 			varsInflux: DataTypes.JSON,
 			equation: DataTypes.JSON,

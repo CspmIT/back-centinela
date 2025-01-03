@@ -17,6 +17,10 @@ module.exports = {
 				allowNull: false,
 				type: Sequelize.STRING,
 			},
+			type: {
+				allowNull: false,
+				type: Sequelize.STRING,
+			},
 			calc: {
 				allowNull: false,
 				comment: '1: Tiene calculo, 0: No tiene calculo',
