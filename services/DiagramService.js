@@ -17,10 +17,10 @@ const ObjectsDiagram = async (id) => {
 		const Diagram = await db.Diagram.findAll({
 			where: { id: id, status: 1 },
 			include: [
-				{ association: 'images' },
-				{ association: 'lines' },
-				{ association: 'texts' },
-				{ association: 'polylines' },
+				{ association: 'images', required: false, where: { status: 1 } },
+				{ association: 'lines', required: false, where: { status: 1 } },
+				{ association: 'texts', required: false, where: { status: 1 } },
+				{ association: 'polylines', required: false, where: { status: 1 } },
 			],
 		})
 
