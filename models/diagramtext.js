@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
 	DiagramText.init(
 		{
 			id_diagram: DataTypes.INTEGER,
+			id_influxvars: DataTypes.INTEGER,
 			name: DataTypes.STRING,
 			left: DataTypes.INTEGER,
 			top: DataTypes.INTEGER,

@@ -19,6 +19,16 @@ module.exports = {
 				onUpdate: 'CASCADE',
 				onDelete: 'CASCADE',
 			},
+			id_influxvars: {
+				type: Sequelize.INTEGER,
+				references: {
+					model: 'InfluxVars',
+					key: 'id',
+				},
+				allowNull: true,
+				onUpdate: 'CASCADE',
+				onDelete: 'CASCADE',
+			},
 			points: { type: Sequelize.JSON },
 			stroke: { type: Sequelize.STRING },
 			strokeWidth: { type: Sequelize.INTEGER },
