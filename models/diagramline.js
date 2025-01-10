@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
 	DiagramLine.init(
 		{
 			id_diagram: DataTypes.INTEGER,
+			id_influxvars: DataTypes.INTEGER,
 			points: DataTypes.JSON,
 			stroke: DataTypes.STRING,
 			strokeWidth: DataTypes.INTEGER,

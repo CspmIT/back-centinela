@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
 		static associate(models) {
 			// define association here
 			this.belongsTo(models.Diagram, { foreignKey: 'id_diagram', as: 'Diagram' })
+			this.hasMany(models.DiagramImageData, { foreignKey: 'id_image', as: 'variables' })
 		}
 	}
 	DiagramImage.init(
@@ -29,7 +30,6 @@ module.exports = (sequelize, DataTypes) => {
 			colorText: DataTypes.STRING,
 			backgroundText: DataTypes.STRING,
 			textPosition: DataTypes.STRING,
-			variables: DataTypes.JSON,
 		},
 		{
 			sequelize,

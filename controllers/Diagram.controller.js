@@ -6,7 +6,9 @@ const {
 	saveInfoDiagram,
 	listDiagram,
 	ObjectsDiagram,
+	saveImageData,
 } = require('../services/DiagramService')
+
 const { db } = require('../models')
 
 const saveDiagram = async (req, res) => {
@@ -14,37 +16,50 @@ const saveDiagram = async (req, res) => {
 	try {
 		transaction = await db.sequelize.transaction()
 
-		const { diagram, images, lines, polylines, texts } = req.body
+		const { diagram, images = [], lines = [], polylines = [], texts = [] } = req.body
 
 		if (!diagram) throw new Error('Faltan los datos del Diagrama')
 
 		const diagramDb = await saveInfoDiagram(diagram, transaction)
 
 		if (images.length) {
-			for (const image of images) {
-				await saveImageDiagram(image, transaction, diagramDb.id)
-			}
+			await Promise.all(
+				images.map(async (image) => {
+					const img = await saveImageDiagram(image, transaction, diagramDb.id)
+					// Guardar variables asociadas a la imagen
+					const variables = Object.keys(image.variables).map((nameVar) => ({
+						id_image: img.id,
+						id_influxvars: image.variables[nameVar].id_variable,
+						name_var: nameVar,
+						show_var: image.variables[nameVar].show,
+					}))
+					console.log(variables)
+					// Guardar todas las variables en paralelo
+					await Promise.all(variables.map((variable) => saveImageData(variable, transaction)))
+				})
+			)
 		}
+
+		// Procesar las líneas
 		if (lines.length) {
-			for (const line of lines) {
-				await saveLineDiagram(line, transaction, diagramDb.id)
-			}
+			await Promise.all(lines.map((line) => saveLineDiagram(line, transaction, diagramDb.id)))
 		}
+
+		// Procesar las polilíneas
 		if (polylines.length) {
-			for (const polyline of polylines) {
-				await savePolylineDiagram(polyline, transaction, diagramDb.id)
-			}
+			await Promise.all(polylines.map((polyline) => savePolylineDiagram(polyline, transaction, diagramDb.id)))
 		}
+
+		// Procesar los textos
 		if (texts.length) {
-			for (const text of texts) {
-				await saveTextDiagram(text, transaction, diagramDb.id)
-			}
+			await Promise.all(texts.map((text) => saveTextDiagram(text, transaction, diagramDb.id)))
 		}
 
 		await transaction.commit()
 		return res.status(200).json(diagramDb)
 	} catch (error) {
-		console.log(error)
+		console.error(error)
+
 		if (transaction) {
 			try {
 				await transaction.rollback()
@@ -73,6 +88,7 @@ const getDiagrams = async (req, res) => {
 		}
 	}
 }
+
 const getObjectCanva = async (req, res) => {
 	try {
 		const { id } = req.query

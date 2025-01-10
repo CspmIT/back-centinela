@@ -33,7 +33,6 @@ module.exports = {
 			colorText: { type: Sequelize.STRING },
 			backgroundText: { type: Sequelize.STRING },
 			textPosition: { type: Sequelize.STRING },
-			variables: { type: Sequelize.JSON, allowNull: true },
 			createdAt: {
 				allowNull: false,
 				type: Sequelize.DATE,

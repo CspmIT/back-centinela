@@ -1,18 +1,19 @@
 'use strict'
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
 	async up(queryInterface, Sequelize) {
-		await queryInterface.createTable('DiagramTexts', {
+		await queryInterface.createTable('DiagramImageData', {
 			id: {
 				allowNull: false,
 				autoIncrement: true,
 				primaryKey: true,
 				type: Sequelize.INTEGER,
 			},
-			id_diagram: {
+			id_image: {
 				type: Sequelize.INTEGER,
 				references: {
-					model: 'Diagrams',
+					model: 'DiagramImages',
 					key: 'id',
 				},
 				allowNull: false,
@@ -25,19 +26,25 @@ module.exports = {
 					model: 'InfluxVars',
 					key: 'id',
 				},
-				allowNull: true,
+				allowNull: false,
 				onUpdate: 'CASCADE',
 				onDelete: 'CASCADE',
 			},
-			name: { type: Sequelize.STRING },
-			left: { type: Sequelize.INTEGER },
-			top: { type: Sequelize.INTEGER },
-			angle: { type: Sequelize.DECIMAL(5, 2) },
-			status: { type: Sequelize.BOOLEAN },
-			text: { type: Sequelize.STRING },
-			sizeText: { type: Sequelize.INTEGER },
-			colorText: { type: Sequelize.STRING },
-			backgroundText: { type: Sequelize.STRING },
+			name_var: {
+				allowNull: false,
+				type: Sequelize.STRING,
+			},
+			show_var: {
+				allowNull: false,
+				type: Sequelize.BOOLEAN,
+				defaultValue: 1,
+			},
+
+			status: {
+				allowNull: false,
+				type: Sequelize.BOOLEAN,
+				defaultValue: 1,
+			},
 			createdAt: {
 				allowNull: false,
 				type: Sequelize.DATE,
@@ -48,7 +55,14 @@ module.exports = {
 			},
 		})
 	},
+
 	async down(queryInterface, Sequelize) {
-		await queryInterface.dropTable('DiagramTexts')
+		/**
+		 * Add reverting commands here.
+		 *
+		 * Example:
+		 * await queryInterface.dropTable('users');
+		 */
+		await queryInterface.dropTable('DiagramImageData')
 	},
 }
