@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         {
             sequelize,
             modelName: 'ChartData',
+            tableName: 'ChartsData',
         }
     )
     return ChartData

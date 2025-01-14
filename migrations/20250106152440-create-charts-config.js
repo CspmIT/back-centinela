@@ -29,12 +29,12 @@ module.exports = {
                 type: Sequelize.STRING(255),
                 allowNull: false,
             },
-            created_at: {
+            createdAt: {
                 type: Sequelize.DATE,
                 allowNull: false,
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
             },
-            updated_at: {
+            updatedAt: {
                 type: Sequelize.DATE,
                 allowNull: false,
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
@@ -42,16 +42,16 @@ module.exports = {
         })
         // Add hooks to handle created_at and updated_at
         queryInterface.sequelize.addHook('beforeCreate', (instance) => {
-            instance.created_at = new Date()
-            instance.updated_at = new Date()
+            instance.createdAt = new Date()
+            instance.updatedAt = new Date()
         })
 
         queryInterface.sequelize.addHook('beforeUpdate', (instance) => {
-            instance.updated_at = new Date()
+            instance.updatedAt = new Date()
         })
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('charts_config')
+        await queryInterface.dropTable('ChartsConfig')
     },
 }

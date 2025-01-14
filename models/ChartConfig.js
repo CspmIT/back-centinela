@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
             key: DataTypes.STRING(255),
             value: DataTypes.TEXT,
             type: DataTypes.STRING,
-            status: DataTypes.TINYINT,
         },
         {
             sequelize,
             modelName: 'ChartConfig',
+            tableName: 'ChartsConfig',
         }
     )
     return ChartConfig

@@ -11,22 +11,22 @@ const { db } = require('../models')
  * @author Jose Romani <jose.romani@hotmail.com>
  */
 const saveVariableInflux = async (data) => {
-	const transaction = await db.sequelize.transaction()
-	try {
-		const [InfluxVar, created] = await db.InfluxVar.findOrCreate({
-			where: { id: data?.id || 0 },
-			defaults: { ...data },
-			transaction,
-		})
-		if (!created) {
-			await InfluxVar.update(data, { transaction })
-		}
-		await transaction.commit()
-		return InfluxVar
-	} catch (error) {
-		await transaction.rollback()
-		throw error
-	}
+    const transaction = await db.sequelize.transaction()
+    try {
+        const [InfluxVar, created] = await db.InfluxVar.findOrCreate({
+            where: { id: data?.id || 0 },
+            defaults: { ...data },
+            transaction,
+        })
+        if (!created) {
+            await InfluxVar.update(data, { transaction })
+        }
+        await transaction.commit()
+        return InfluxVar
+    } catch (error) {
+        await transaction.rollback()
+        throw error
+    }
 }
 
 /**
@@ -40,16 +40,15 @@ const saveVariableInflux = async (data) => {
  * @author Jose Romani <jose.romani@hotmail.com>
  */
 const getVariables = async () => {
-	try {
-		const list = await db.InfluxVar.findAll({ where: { status: 1 } })
-		return list
-	} catch (error) {
-		await transaction.rollback()
-		throw error
-	}
+    try {
+        const list = await db.InfluxVar.findAll({ where: { status: 1 } })
+        return list
+    } catch (error) {
+        throw error
+    }
 }
 
 module.exports = {
-	saveVariableInflux,
-	getVariables,
+    saveVariableInflux,
+    getVariables,
 }
