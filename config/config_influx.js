@@ -34,7 +34,7 @@ module.exports = {
         INFLUX_BUCKET: 'IOT-MasAgua',
     },
     Sensors_ExternosPublic: {
-        INFLUX_URL: 'http://200.63.120.50:52512',
+        INFLUX_URL: 'http://200.63.120.50:58112',
         INFLUXDB_TOKEN:
             '1gvq48ojA6p6G0wk7MHosroWEAz3PbIyLJtqJ3ovW4sTqmwvb-4RQyGD_1ooDuml0AjPEQF_OaTV8HkXN7aBwQ==',
         INFLUX_ORG: 'COOPTECH',
