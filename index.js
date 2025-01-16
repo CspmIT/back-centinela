@@ -21,7 +21,6 @@ app.use(cookieParser())
 // Configuracion para el body parser
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use('/api', publicRoutes)
 app.use('/api', AuthRoutes)
 app.use('/api', UserRoutes)
 app.use('/api', DiagramRoutes)

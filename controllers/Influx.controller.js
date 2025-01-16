@@ -20,7 +20,6 @@ async function InfluxConection(req, res) {
 async function InfluxChart(req, res) {
     try {
         const influxVar = req.body
-        console.log(Object.values(influxVar))
         const query = await generateQuery(Object.values(influxVar).shift())
 
         const { user = false } = req
@@ -28,6 +27,7 @@ async function InfluxChart(req, res) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
         }
         const { influx_name = false } = user
+        console.log(influx_name)
         if (!influx_name) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
         }
