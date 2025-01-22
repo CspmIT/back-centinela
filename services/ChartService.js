@@ -19,10 +19,16 @@ class ChartService {
                             },
                         ],
                     },
+                    {
+                        association: 'BombsData',
+                        include: [{ association: 'InfluxVars' }],
+                        order: [['id', 'ASC']],
+                    },
                 ],
             })
             return charts
         } catch (error) {
+            console.log(error)
             throw error
         }
     }
@@ -48,6 +54,33 @@ class ChartService {
                 return { ...data, chart_id: newChart.id }
             })
             await db.ChartData.bulkCreate(newChartData, { transaction: t })
+
+            t.commit()
+            return newChart
+        } catch (error) {
+            //Hago un rolback y retorno el error
+            t.rollback()
+            throw Error(error)
+        }
+    }
+
+    static async createBombs(chart, chartConfig, bombsData) {
+        const t = await db.sequelize.transaction()
+        try {
+            const newChart = await db.Chart.create(chart, { transaction: t })
+
+            console.log(newChart)
+            const newChartConfig = chartConfig.map((config) => {
+                return { ...config, chart_id: newChart.id }
+            })
+            console.log(newChartConfig)
+            await db.ChartConfig.bulkCreate(newChartConfig, { transaction: t })
+
+            const newBombsData = bombsData.map((data) => {
+                return { ...data, chartId: newChart.id }
+            })
+            console.log(newBombsData)
+            await db.BombsData.bulkCreate(newBombsData, { transaction: t })
 
             t.commit()
             return newChart

@@ -21,7 +21,6 @@ const createChart = async (req, res) => {
         if (!type) {
             throw new Error('Type is required')
         }
-        console.log(baseChart)
         const validChart = validationsTypes[type].safeParse(baseChart)
 
         if (!validChart.success) {
