@@ -27,7 +27,6 @@ async function InfluxChart(req, res) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
         }
         const { influx_name = false } = user
-        console.log(influx_name)
         if (!influx_name) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
         }
