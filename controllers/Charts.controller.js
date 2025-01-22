@@ -5,9 +5,18 @@ const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
 const { ChartService } = require('../services/ChartService')
 const ChartBuilder = require('../utils/js/chartBuilder')
 
-const findAllCharts = async (req, res) => {
+const findCharts = async (req, res) => {
     try {
         const charts = await ChartService.getCharts()
+        res.status(200).json(charts)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+const findAllCharts = async (req, res) => {
+    try {
+        const charts = await ChartService.getAllCharts()
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -46,6 +55,7 @@ const createChart = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
 const autorizedConfigKeys = {
     LiquidFillPorcentaje: ['border', 'color', 'porcentage', 'shape', 'title'],
     CirclePorcentaje: ['color', 'title'],
@@ -63,7 +73,27 @@ const validationsTypes = {
     // LineChart: LineChartSchema,
 }
 
+const statusChart = async (req, res) => {
+    try {
+        const { id, status } = req.body
+        if (!id) {
+            throw new Error('Debe pasar el id del grafico')
+        }
+        // Actualizo el estado al opuesto
+        const newStatus = status ? 0 : 1
+
+        const chartUpdated = await ChartService.changeStatus(id, newStatus)
+
+        console.log(chartUpdated)
+        res.status(200).json(chartUpdated)
+    } catch (error) {
+        res.status(400).json(error.message)
+    }
+}
+
 module.exports = {
     createChart,
+    findCharts,
     findAllCharts,
+    statusChart,
 }

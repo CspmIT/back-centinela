@@ -28,7 +28,15 @@ class ChartService {
             })
             return charts
         } catch (error) {
-            console.log(error)
+            throw error
+        }
+    }
+
+    static async getAllCharts() {
+        try {
+            const charts = await db.Chart.findAll()
+            return charts
+        } catch (error) {
             throw error
         }
     }
@@ -89,6 +97,17 @@ class ChartService {
             t.rollback()
             throw Error(error)
         }
+    }
+
+    static async changeStatus(id, status) {
+        try {
+            console.log(status, id)
+            const chartUpdated = await db.Chart.update(
+                { status },
+                { where: { id } }
+            )
+            return chartUpdated
+        } catch (error) {}
     }
 }
 
