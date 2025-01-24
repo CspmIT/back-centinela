@@ -169,13 +169,14 @@ class ChartService {
 
     static async changeStatus(id, status) {
         try {
-            console.log(status, id)
             const chartUpdated = await db.Chart.update(
                 { status },
                 { where: { id } }
             )
             return chartUpdated
-        } catch (error) {}
+        } catch (error) {
+            throw Error(error)
+        }
     }
 }
 
