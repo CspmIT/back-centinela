@@ -14,6 +14,19 @@ const findCharts = async (req, res) => {
     }
 }
 
+const findChartById = async (req, res) => {
+    try {
+        const { id } = req.params
+        const chart = await ChartService.getChartById(id)
+        if (!chart) {
+            throw new Error('No se encontro ningun grafico')
+        }
+        res.status(200).json(chart)
+    } catch (error) {
+        res.status(200).json({ message: error.message })
+    }
+}
+
 const findAllCharts = async (req, res) => {
     try {
         const charts = await ChartService.getAllCharts()
@@ -51,6 +64,50 @@ const createChart = async (req, res) => {
         const newChart = await ChartService.createChart(chart, config, data)
 
         res.status(201).json({ newChart })
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+const editChart = async (req, res) => {
+    try {
+        const chartId = req.params.id
+        const updatedChart = req.body // Nuevos datos del gráfico
+        const { type = false } = updatedChart
+
+        if (!type) {
+            throw new Error('El tipo de gráfico (type) es obligatorio.')
+        }
+
+        // Validar el tipo de gráfico y la estructura de los datos
+        const validChart = validationsTypes[type].safeParse(updatedChart)
+        if (!validChart.success) {
+            throw new Error(validChart.error.errors[0].message)
+        }
+
+        // Verificar si es un porcentaje para ajustar las claves de datos permitidas
+        if (validChart.data.porcentage === true) {
+            autorizedDataKeys[type] = autorizedDataKeys[type].filter(
+                (key) => key !== 'unidad'
+            )
+        }
+
+        // Construir las estructuras actualizadas de configuración y datos
+        const chartBuilder = new ChartBuilder(
+            autorizedConfigKeys[type],
+            autorizedDataKeys[type]
+        )
+        const { chart, config, data } = chartBuilder.build(updatedChart)
+
+        // Llamar al servicio para actualizar los datos en la base
+        const updatedChartData = await ChartService.updateChart(
+            chartId,
+            chart,
+            config,
+            data
+        )
+
+        res.status(200).json({ updatedChart: updatedChartData })
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
@@ -96,4 +153,6 @@ module.exports = {
     findCharts,
     findAllCharts,
     statusChart,
+    findChartById,
+    editChart,
 }
