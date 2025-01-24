@@ -28,7 +28,42 @@ class ChartService {
             })
             return charts
         } catch (error) {
-            console.log(error)
+            throw error
+        }
+    }
+
+    static async getChartById(id) {
+        const chart = await db.Chart.findAll({
+            where: { id: id },
+            include: [
+                {
+                    association: 'ChartConfig',
+                    attributes: ['key', 'value', 'type'],
+                },
+                {
+                    association: 'ChartData',
+                    attributes: ['key', 'value', 'label'],
+                    include: [
+                        {
+                            association: 'InfluxVars',
+                        },
+                    ],
+                },
+                {
+                    association: 'BombsData',
+                    include: [{ association: 'InfluxVars' }],
+                    order: [['id', 'ASC']],
+                },
+            ],
+        })
+        return chart.shift()
+    }
+
+    static async getAllCharts() {
+        try {
+            const charts = await db.Chart.findAll()
+            return charts
+        } catch (error) {
             throw error
         }
     }
@@ -64,6 +99,47 @@ class ChartService {
         }
     }
 
+    static async updateChart(chartId, chart, chartConfig, chartData) {
+        const t = await db.sequelize.transaction()
+        try {
+            // Actualizar el gráfico principal
+            await db.Chart.update(chart, {
+                where: { id: chartId },
+                transaction: t,
+            })
+
+            // Actualizar configuraciones
+            await db.ChartConfig.destroy({
+                where: { chart_id: chartId },
+                transaction: t,
+            })
+            const updatedChartConfig = chartConfig.map((config) => ({
+                ...config,
+                chart_id: chartId,
+            }))
+            await db.ChartConfig.bulkCreate(updatedChartConfig, {
+                transaction: t,
+            })
+
+            // Actualizar datos
+            await db.ChartData.destroy({
+                where: { chart_id: chartId },
+                transaction: t,
+            })
+            const updatedChartData = chartData.map((data) => ({
+                ...data,
+                chart_id: chartId,
+            }))
+            await db.ChartData.bulkCreate(updatedChartData, { transaction: t })
+
+            await t.commit()
+            return { chart, config: updatedChartConfig, data: updatedChartData }
+        } catch (error) {
+            await t.rollback()
+            throw Error(error)
+        }
+    }
+
     static async createBombs(chart, chartConfig, bombsData) {
         const t = await db.sequelize.transaction()
         try {
@@ -89,6 +165,17 @@ class ChartService {
             t.rollback()
             throw Error(error)
         }
+    }
+
+    static async changeStatus(id, status) {
+        try {
+            console.log(status, id)
+            const chartUpdated = await db.Chart.update(
+                { status },
+                { where: { id } }
+            )
+            return chartUpdated
+        } catch (error) {}
     }
 }
 
