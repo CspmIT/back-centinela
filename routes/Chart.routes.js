@@ -14,6 +14,6 @@ routes.get('/charts/:id', verifyToken, findChartById)
 routes.get('/allCharts', verifyToken, findAllCharts)
 routes.post('/charts', verifyToken, createChart)
 routes.post('/charts/:id', verifyToken, editChart)
-routes.post('/charts/status', verifyToken, statusChart)
+routes.put('/charts/status', verifyToken, statusChart)
 
 module.exports = routes
