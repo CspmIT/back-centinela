@@ -43,22 +43,19 @@ const createChart = async (req, res) => {
         if (!type) {
             throw new Error('Type is required')
         }
+        const { autorizedConfigKeys, autorizedDataKeys } = getKeys(type)
         const validChart = validationsTypes[type].safeParse(baseChart)
 
         if (!validChart.success) {
             throw new Error(validChart.error.errors[0].message)
         }
+        let filteredKeys = autorizedDataKeys
         if (validChart.data.porcentage === true) {
             //No se guarda unidad
-            autorizedDataKeys[type] = autorizedDataKeys[type].filter(
-                (key) => key !== 'unidad'
-            )
+            filteredKeys = autorizedDataKeys.filter((key) => key !== 'unidad')
         }
 
-        const chartBuilder = new ChartBuilder(
-            autorizedConfigKeys[type],
-            autorizedDataKeys[type]
-        )
+        const chartBuilder = new ChartBuilder(autorizedConfigKeys, filteredKeys)
 
         const { chart, config, data } = chartBuilder.build(baseChart)
         const newChart = await ChartService.createChart(chart, config, data)
@@ -79,24 +76,21 @@ const editChart = async (req, res) => {
             throw new Error('El tipo de gráfico (type) es obligatorio.')
         }
 
+        const { autorizedConfigKeys, autorizedDataKeys } = getKeys(type)
         // Validar el tipo de gráfico y la estructura de los datos
         const validChart = validationsTypes[type].safeParse(updatedChart)
         if (!validChart.success) {
             throw new Error(validChart.error.errors[0].message)
         }
 
+        let filteredKeys = autorizedDataKeys
         // Verificar si es un porcentaje para ajustar las claves de datos permitidas
         if (validChart.data.porcentage === true) {
-            autorizedDataKeys[type] = autorizedDataKeys[type].filter(
-                (key) => key !== 'unidad'
-            )
+            filteredKeys = autorizedDataKeys.filter((key) => key !== 'unidad')
         }
 
         // Construir las estructuras actualizadas de configuración y datos
-        const chartBuilder = new ChartBuilder(
-            autorizedConfigKeys[type],
-            autorizedDataKeys[type]
-        )
+        const chartBuilder = new ChartBuilder(autorizedConfigKeys, filteredKeys)
         const { chart, config, data } = chartBuilder.build(updatedChart)
 
         // Llamar al servicio para actualizar los datos en la base
@@ -113,13 +107,25 @@ const editChart = async (req, res) => {
     }
 }
 
-const autorizedConfigKeys = {
-    LiquidFillPorcentaje: ['border', 'color', 'porcentage', 'shape', 'title'],
-    CirclePorcentaje: ['color', 'title'],
-}
-const autorizedDataKeys = {
-    LiquidFillPorcentaje: ['maxValue', 'value', 'unidad'],
-    CirclePorcentaje: ['maxValue', 'value'],
+const getKeys = (type) => {
+    const autorizedConfigKeys = {
+        LiquidFillPorcentaje: [
+            'border',
+            'color',
+            'porcentage',
+            'shape',
+            'title',
+        ],
+        CirclePorcentaje: ['color', 'title'],
+    }
+    const autorizedDataKeys = {
+        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad'],
+        CirclePorcentaje: ['maxValue', 'value'],
+    }
+    return {
+        autorizedConfigKeys: autorizedConfigKeys[type],
+        autorizedDataKeys: autorizedDataKeys[type],
+    }
 }
 
 const validationsTypes = {
@@ -141,7 +147,6 @@ const statusChart = async (req, res) => {
 
         const chartUpdated = await ChartService.changeStatus(id, newStatus)
 
-        console.log(chartUpdated)
         res.status(200).json(chartUpdated)
     } catch (error) {
         res.status(400).json(error.message)
