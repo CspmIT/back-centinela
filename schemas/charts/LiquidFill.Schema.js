@@ -10,7 +10,10 @@ const LiquidFillSchema = z
         idVar: z.number({ message: 'idVar debe ser un numero' }),
         shape: z.string({ message: 'shape debe ser string' }).min(1).max(255),
         title: z.string({ message: 'title debe ser string ' }).min(1).max(255),
-        unidad: z.string({ message: 'unidad debe ser string' }).optional(),
+        unidad: z
+            .string({ message: 'unidad debe ser string' })
+            .nullable()
+            .optional(),
     })
     .refine(
         (data) => {
