@@ -1,3 +1,4 @@
+const { where } = require('sequelize')
 const { db } = require('../models')
 
 /**
@@ -48,7 +49,17 @@ const getVariables = async () => {
     }
 }
 
+const getVarById = async (id) => {
+    try {
+        const influxVar = await db.InfluxVar.findAll({ where: { id: id } })
+        return influxVar.shift()
+    } catch (error) {
+        throw error
+    }
+}
+
 module.exports = {
     saveVariableInflux,
     getVariables,
+    getVarById,
 }

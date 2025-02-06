@@ -57,7 +57,6 @@ class ChartBuilder {
         // Validar y construir ChartData
         const dataObj = this.validateData(data)
 
-        console.log(dataObj)
         return { chart: chartObj, config: configObj, data: dataObj }
     }
 

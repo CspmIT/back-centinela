@@ -128,14 +128,6 @@ const getKeys = (type) => {
     }
 }
 
-const validationsTypes = {
-    LiquidFillPorcentaje: LiquidFillSchema,
-    CirclePorcentaje: CirclePorcentajeSchema,
-    // DoughnutChart: DoughnutChartSchema,
-    // BarDataSet: BarDataSetSchema,
-    // LineChart: LineChartSchema,
-}
-
 const statusChart = async (req, res) => {
     try {
         const { id, status } = req.body
@@ -151,6 +143,11 @@ const statusChart = async (req, res) => {
     } catch (error) {
         res.status(400).json(error.message)
     }
+}
+
+const validationsTypes = {
+    LiquidFillPorcentaje: LiquidFillSchema,
+    CirclePorcentaje: CirclePorcentajeSchema,
 }
 
 module.exports = {

@@ -1,3 +1,5 @@
+const { format } = require('@formkit/tempo')
+
 /**
  * Procesa los datos obtenidos desde InfluxDB para devolver un objeto simplificado.
  *
@@ -27,7 +29,7 @@ const fomratInfluxData = async (influxData) => {
  * @returns {Object} Un objeto con arrays de datos por cada campo.
  * @author [Jose Romani] <jose.romani@hotmail.com>
  */
-const fomratInfluxDataArray = async (influxData) => {
+const fomratInfluxDataArray = (influxData) => {
     const dataReturn = new Map()
 
     influxData.forEach((element) => {
@@ -45,7 +47,18 @@ const fomratInfluxDataArray = async (influxData) => {
     return Object.fromEntries(dataReturn)
 }
 
+const formatInfluxSeriesArray = (influxSeries) => {
+    const series = influxSeries.map((element) => ({
+        field: element._field,
+        value: element._value,
+        time: format(element._time, 'D/M/YY hh:mm:ss', 'es'),
+        topic: element.topic,
+    }))
+    series.pop()
+    return series
+}
 module.exports = {
     fomratInfluxData,
     fomratInfluxDataArray,
+    formatInfluxSeriesArray,
 }

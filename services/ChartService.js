@@ -13,16 +13,16 @@ class ChartService {
                     {
                         association: 'ChartData',
                         attributes: ['key', 'value', 'label'],
-                        include: [
-                            {
-                                association: 'InfluxVars',
-                            },
-                        ],
+                        include: [{ association: 'InfluxVars' }],
                     },
                     {
                         association: 'BombsData',
                         include: [{ association: 'InfluxVars' }],
                         order: [['id', 'ASC']],
+                    },
+                    {
+                        association: 'ChartSeriesData',
+                        include: [{ association: 'InfluxVars' }],
                     },
                 ],
             })
@@ -134,6 +134,31 @@ class ChartService {
 
             await t.commit()
             return { chart, config: updatedChartConfig, data: updatedChartData }
+        } catch (error) {
+            await t.rollback()
+            throw Error(error)
+        }
+    }
+
+    static async createSeriesChart(chart, chartConfig, chartSeriesData) {
+        const t = await db.sequelize.transaction()
+        try {
+            const newChart = await db.Chart.create(chart, { transaction: t })
+
+            const newChartConfig = chartConfig.map((config) => {
+                return { ...config, chart_id: newChart.id }
+            })
+            await db.ChartConfig.bulkCreate(newChartConfig, { transaction: t })
+
+            const newChartSeriesData = chartSeriesData.map((data) => {
+                return { ...data, chart_id: newChart.id }
+            })
+            await db.ChartSeriesData.bulkCreate(newChartSeriesData, {
+                transaction: t,
+            })
+
+            t.commit()
+            return newChart
         } catch (error) {
             await t.rollback()
             throw Error(error)
