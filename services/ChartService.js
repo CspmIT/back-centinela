@@ -170,17 +170,14 @@ class ChartService {
         try {
             const newChart = await db.Chart.create(chart, { transaction: t })
 
-            console.log(newChart)
             const newChartConfig = chartConfig.map((config) => {
                 return { ...config, chart_id: newChart.id }
             })
-            console.log(newChartConfig)
             await db.ChartConfig.bulkCreate(newChartConfig, { transaction: t })
 
             const newBombsData = bombsData.map((data) => {
                 return { ...data, chartId: newChart.id }
             })
-            console.log(newBombsData)
             await db.BombsData.bulkCreate(newBombsData, { transaction: t })
 
             t.commit()

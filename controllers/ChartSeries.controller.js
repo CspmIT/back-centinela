@@ -21,6 +21,11 @@ const generateSeriesChart = async (validatedChart) => {
         value: validatedChart.xAxisConfig[config],
         type: typeof validatedChart.xAxisConfig[config],
     }))
+    chartConfig.push({
+        key: 'title',
+        value: validatedChart.title,
+        type: 'string',
+    })
 
     const chartSeriesData = validatedChart.yData
     return {
