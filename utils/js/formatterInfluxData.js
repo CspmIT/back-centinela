@@ -51,7 +51,11 @@ const formatInfluxSeriesArray = (influxSeries) => {
     const series = influxSeries.map((element) => ({
         field: element._field,
         value: element._value,
-        time: format(element._time, 'D/M/YY hh:mm:ss', 'es'),
+        time: format({
+            date: element._time,
+            format: 'D/M/YY HH:mm:ss',
+            tz: 'America/Argentina/Buenos_Aires',
+        }),
         topic: element.topic,
     }))
     series.pop()
