@@ -47,8 +47,8 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
             query: `|> range(start: ${query.dateRange}, stop: now())
             |> filter(fn: (r) => r.topic == "${query.topic}")
             |> filter(fn: (r) => r._field == "${query.field}")
-            |> aggregateWindow(every: ${query.samplingPeriod}, fn: mean, createEmpty: false)
-            |> yield(name: "mean")`,
+            |> aggregateWindow(every: ${query.samplingPeriod}, fn: ${query.typePeriod}, createEmpty: true)
+            |> yield(name: "${query.typePeriod}")`,
         }
     })
 
@@ -68,7 +68,6 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
 
 async function ConsultaInfluxMultiple(queries, influx_name) {
     try {
-        console.log(queries)
         const results = await Promise.all(
             queries.map(async (queryObj) => {
                 const result = await ConsultaInflux(queryObj.query, influx_name)
@@ -90,7 +89,6 @@ async function ConsultaInfluxMultiple(queries, influx_name) {
 async function SeriesDataInflux(req, res) {
     try {
         const influxVars = req.body
-        console.log(influxVars)
         const { user = false } = req
         if (!user) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
