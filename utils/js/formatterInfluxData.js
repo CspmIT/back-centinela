@@ -46,21 +46,34 @@ const fomratInfluxDataArray = (influxData) => {
 
     return Object.fromEntries(dataReturn)
 }
+const formatter = new Intl.DateTimeFormat('es-AR', {
+    year: '2-digit',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'America/Argentina/Buenos_Aires',
+})
 
 const formatInfluxSeriesArray = (influxSeries) => {
-    const series = influxSeries.map((element) => ({
-        field: element._field,
-        value: element._value,
-        time: format({
-            date: element._time,
-            format: 'D/M/YY HH:mm:ss',
-            tz: 'America/Argentina/Buenos_Aires',
-        }),
-        topic: element.topic,
-    }))
-    series.pop()
+    console.time('Tiempo Formateo formatInfluxSeriesArray')
+
+    const series = new Array(influxSeries.length - 1)
+    for (let i = 0; i < influxSeries.length - 1; i++) {
+        const element = influxSeries[i]
+        series[i] = {
+            field: element._field,
+            value: element._value,
+            time: formatter.format(new Date(element._time)), // Reemplazo de format()
+            topic: element.topic,
+        }
+    }
+
+    console.timeEnd('Tiempo Formateo formatInfluxSeriesArray')
     return series
 }
+
 module.exports = {
     fomratInfluxData,
     fomratInfluxDataArray,

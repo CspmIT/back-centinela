@@ -38,68 +38,85 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
     if (!user?.influx_name) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
     }
-    const queries = queryObject.map((query) => {
-        return {
-            varId: query.varId,
-            name: query?.name,
-            unit: query?.unit,
-            type: query.type,
-            query: `|> range(start: ${query.dateRange}, stop: now())
-            |> filter(fn: (r) => r.topic == "${query.topic}")
-            |> filter(fn: (r) => r._field == "${query.field}")
-            |> aggregateWindow(every: ${query.samplingPeriod}, fn: ${query.typePeriod}, createEmpty: true)
-            |> yield(name: "${query.typePeriod}")`,
-        }
-    })
 
-    // Ejecutar todas las consultas en una sola petición
-    const dataInflux = await ConsultaInfluxMultiple(queries, user.influx_name)
+    const topics = [...new Set(queryObject.map((q) => q.topic))] // Evita duplicados
+    const fields = [...new Set(queryObject.map((q) => q.field))]
 
-    // Formatear los datos en un objeto { varId: datos }
-    const formattedData = queries.reduce((acc, query) => {
+    const batchQuery = `
+        |> range(start: ${queryObject[0].dateRange}, stop: now())
+        |> filter(fn: (r) => ${topics
+            .map((t) => `r.topic == "${t}"`)
+            .join(' or ')})
+        |> filter(fn: (r) => ${fields
+            .map((f) => `r._field == "${f}"`)
+            .join(' or ')})
+        |> aggregateWindow(every: ${queryObject[0].samplingPeriod}, fn: ${
+        queryObject[0].typePeriod
+    }, createEmpty: true)
+        |> yield(name: "${queryObject[0].typePeriod}")`
+
+    console.time('Tiempo ConsultaInflux')
+    const rawData = await ConsultaInflux(batchQuery, user.influx_name)
+    console.timeEnd('Tiempo ConsultaInflux')
+
+    console.time('Tiempo Formateo de datos')
+    // Formateamos los datos agrupándolos por `varId`
+    const formattedData = queryObject.reduce((acc, query) => {
         acc[query.varId] = formatInfluxSeriesArray(
-            dataInflux[query.varId] || []
+            rawData.filter(
+                (d) => d.topic === query.topic && d._field === query.field
+            )
         )
         return acc
     }, {})
+    console.timeEnd('Tiempo Formateo de datos')
 
     return formattedData
 }
 
 async function ConsultaInfluxMultiple(queries, influx_name) {
     try {
+        // Ejecuto todas las consultas en paralelo y las guardamos en un objeto
         const results = await Promise.all(
-            queries.map(async (queryObj) => {
-                const result = await ConsultaInflux(queryObj.query, influx_name)
-                return { varId: queryObj.varId, data: result }
-            })
+            queries.map(({ varId, query }) =>
+                ConsultaInflux(query, influx_name).then((data) => [varId, data])
+            )
         )
 
-        // Convertimos el array en un objeto { varId: data }
-        return results.reduce((acc, { varId, data }) => {
-            acc[varId] = data
-            return acc
-        }, {})
+        // Convierto la matriz de resultados en un objeto { varId: data }
+        return Object.fromEntries(results)
     } catch (error) {
-        console.error('Error en ConsultaInfluxMultiple:', error)
+        console.error(
+            'Error en ConsultaInfluxMultiple:',
+            error.message,
+            error.stack
+        )
         throw new Error('Error consultando InfluxDB')
     }
 }
 
 async function SeriesDataInflux(req, res) {
+    console.time('Tiempo total SERIES DATA INFLUX')
     try {
         const influxVars = req.body
         const { user = false } = req
         if (!user) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
         }
+        console.time('Tiempo Get Multiple historico')
         const data = await getMultipleHistoricalInfluxData(influxVars, user)
-        if (data.length > 0) {
+        console.timeEnd('Tiempo Get Multiple historico')
+
+        if (data.length === 0) {
             throw new Error('No se obtuvieron datos')
         }
+        console.timeEnd('Tiempo total SERIES DATA INFLUX')
         return res.status(200).json(data)
     } catch (error) {
-        return res.status(500).json({ message: error.message })
+        console.timeEnd('Tiempo total SERIES DATA INFLUX')
+        return res
+            .status(500)
+            .json({ message: error.message, stack: error.stack })
     }
 }
 
