@@ -6,39 +6,36 @@ const config_influx = require(__dirname + '/../config/config_influx.js')
 
 const ConsultaInflux = async (query, influxName) => {
     try {
-        const url = config_influx[influxName].INFLUX_URL
-        const token = config_influx[influxName].INFLUXDB_TOKEN
-        const org = config_influx[influxName].INFLUX_ORG
-        const bucket = config_influx[influxName].INFLUX_BUCKET
+        const {
+            INFLUX_URL: url,
+            INFLUXDB_TOKEN: token,
+            INFLUX_ORG: org,
+            INFLUX_BUCKET: bucket,
+        } = config_influx[influxName]
 
-        // Crea una instancia del cliente
         const influxDB = new InfluxDB({ url, token })
-
-        // Crea una consulta
         const queryApi = influxDB.getQueryApi(org)
-        // Escribe tu consulta en Flux
-        const fluxQuery = `from(bucket: "${bucket}")
-							${query}`
 
-        // Ejecuta la consulta
-        return new Promise((resolve, reject) => {
-            const results = []
+        const fluxQuery = `from(bucket: "${bucket}") ${query}`
+        const results = []
+
+        await new Promise((resolve, reject) => {
             queryApi.queryRows(fluxQuery, {
                 next(row, tableMeta) {
-                    // Convertir la fila a un objeto
-                    const record = tableMeta.toObject(row)
-                    results.push(record)
+                    results.push(tableMeta.toObject(row))
                 },
                 error(error) {
                     reject(error)
                 },
                 complete() {
-                    resolve(results)
+                    resolve()
                 },
             })
         })
+
+        return results
     } catch (error) {
-        throw new Error(error)
+        throw new Error(error.message || 'Error en ConsultaInflux')
     }
 }
 
