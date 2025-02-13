@@ -1,5 +1,3 @@
-const { format } = require('@formkit/tempo')
-
 /**
  * Procesa los datos obtenidos desde InfluxDB para devolver un objeto simplificado.
  *
@@ -57,8 +55,7 @@ const formatter = new Intl.DateTimeFormat('es-AR', {
 })
 
 const formatInfluxSeriesArray = (influxSeries) => {
-    console.time('Tiempo Formateo formatInfluxSeriesArray')
-
+    console.time('Format Serie')
     const series = new Array(influxSeries.length - 1)
     for (let i = 0; i < influxSeries.length - 1; i++) {
         const element = influxSeries[i]
@@ -70,7 +67,7 @@ const formatInfluxSeriesArray = (influxSeries) => {
         }
     }
 
-    console.timeEnd('Tiempo Formateo formatInfluxSeriesArray')
+    console.timeEnd('Format Serie')
     return series
 }
 
