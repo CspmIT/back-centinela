@@ -55,11 +55,8 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
     }, createEmpty: true)
         |> yield(name: "${queryObject[0].typePeriod}")`
 
-    console.time('CONSULTA INFLUX')
     const rawData = await ConsultaInflux(batchQuery, user.influx_name)
-    console.timeEnd('CONSULTA INFLUX')
     // Formateamos los datos agrupándolos por `varId`
-    console.time('FORMAT DATA')
     const formattedData = queryObject.reduce((acc, query) => {
         acc[query.varId] = formatInfluxSeriesArray(
             rawData.filter(
@@ -68,7 +65,6 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         )
         return acc
     }, {})
-    console.timeEnd('FORMAT DATA')
 
     return formattedData
 }
