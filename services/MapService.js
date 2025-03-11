@@ -22,6 +22,15 @@ class MapService {
         }
     }
 
+    static async getAll() {
+        try {
+            const maps = await db.Maps.findAll({})
+            return maps
+        } catch (error) {
+            throw new Error('Error al obtener el mapa')
+        }
+    }
+
     static async createMap(map) {
         const t = await db.sequelize.transaction()
         const { viewState, markers } = map
@@ -56,6 +65,69 @@ class MapService {
             return { newMap, markersData }
         } catch (e) {
             t.rollback()
+            throw new Error(e)
+        }
+    }
+
+    static async editMap(id, map) {
+        const t = await db.sequelize.transaction()
+        const { viewState, markers } = map
+
+        try {
+            // Buscar el mapa existente
+            const existingMap = await db.Maps.findByPk(id, { transaction: t })
+            if (!existingMap) {
+                throw new Error('Map not found')
+            }
+
+            // Actualizar los datos del mapa
+            await existingMap.update(viewState, { transaction: t })
+
+            // Primero eliminar los popups asociados a los markers
+            await db.PopUpsMarkers.destroy({
+                where: {
+                    idMarker: {
+                        [db.Sequelize.Op.in]: db.Sequelize.literal(
+                            `(SELECT id FROM MarkersMaps WHERE idMap = ${id})`
+                        ),
+                    },
+                },
+                transaction: t,
+            })
+
+            // Luego eliminar los markers
+            await db.MarkersMaps.destroy({
+                where: { idMap: id },
+                transaction: t,
+            })
+
+            // Guardar los nuevos markers y popups en paralelo
+            const markersData = await Promise.all(
+                markers.map(async (marker) => {
+                    const { popupInfo, ...markerData } = marker // Extraer popupInfo
+                    const saveMarker = { ...markerData, idMap: id }
+
+                    // Guardar el nuevo marker
+                    const newMarker = await db.MarkersMaps.create(saveMarker, {
+                        transaction: t,
+                    })
+                    console.log('actualizó marker', saveMarker)
+
+                    // Guardar el nuevo popupInfo asociado al marker
+                    const savePopup = { ...popupInfo, idMarker: newMarker.id }
+                    const newPopup = await db.PopUpsMarkers.create(savePopup, {
+                        transaction: t,
+                    })
+                    console.log('actualizó popup', savePopup)
+
+                    return { newMarker, newPopup }
+                })
+            )
+
+            await t.commit()
+            return { updatedMap: existingMap, markersData }
+        } catch (e) {
+            await t.rollback()
             throw new Error(e)
         }
     }

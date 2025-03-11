@@ -26,7 +26,39 @@ const createMap = async (req, res) => {
         return res.status(500).json(error.message)
     }
 }
-const getMaps = (req, res) => {
+const editMap = async (req, res) => {
+    try {
+        const map = req.body
+        const { id = false } = req.params
+        const { user = false } = req
+        if (!user) {
+            return res
+                .status(403)
+                .json({ message: 'Debe estar logeado para hacer esto.' })
+        }
+        if (!id) {
+            return res
+                .status(400)
+                .json({ message: 'Debe pasar un id para poder actualizar.' })
+        }
+
+        const validMap = MapSchema.safeParse(map)
+
+        if (!validMap.success) {
+            return res.status(400).json(validMap)
+        }
+        const { updatedMap, markersData } = await MapService.editMap(
+            id,
+            validMap.data
+        )
+        return res.status(200).json({ updatedMap, markersData })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json(error.message)
+    }
+}
+
+const getMaps = async (req, res) => {
     try {
         const { user = false } = req
         if (!user) {
@@ -34,6 +66,9 @@ const getMaps = (req, res) => {
                 .status(403)
                 .json({ message: 'Debe estar logeado para hacer esta accion.' })
         }
+
+        const maps = await MapService.getAll()
+        return res.status(200).json(maps)
     } catch (error) {
         console.error(error)
         return res
@@ -54,7 +89,6 @@ const getMapById = async (req, res) => {
                 .json({ message: 'Debe estar logeado para hacer esta accion.' })
         }
         const resolvedMap = await MapService.searchById(id)
-        console.log(resolvedMap)
         return res.status(200).json(resolvedMap)
     } catch (error) {
         console.error(error)
@@ -65,5 +99,7 @@ const getMapById = async (req, res) => {
 }
 module.exports = {
     createMap,
+    editMap,
     getMapById,
+    getMaps,
 }
