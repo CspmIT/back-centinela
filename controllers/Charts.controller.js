@@ -45,6 +45,7 @@ const createChart = async (req, res) => {
             throw new Error('Type is required')
         }
         const { autorizedConfigKeys, autorizedDataKeys } = getKeys(type)
+        baseChart.order = parseInt(baseChart.order)
         const validChart = validationsTypes[type].safeParse(baseChart)
 
         if (!validChart.success) {
@@ -78,6 +79,7 @@ const editChart = async (req, res) => {
         }
 
         const { autorizedConfigKeys, autorizedDataKeys } = getKeys(type)
+        updatedChart.order = parseInt(updatedChart.order)
         // Validar el tipo de gráfico y la estructura de los datos
         const validChart = validationsTypes[type].safeParse(updatedChart)
         if (!validChart.success) {
