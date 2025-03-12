@@ -1,6 +1,7 @@
 const {
     CirclePorcentajeSchema,
 } = require('../schemas/charts/CirclePorcentaje.Schema')
+const GaugeSpeedSchema = require('../schemas/charts/GaugeSpeed.Schema')
 const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
 const { ChartService } = require('../services/ChartService')
 const ChartBuilder = require('../utils/js/chartBuilder')
@@ -117,10 +118,12 @@ const getKeys = (type) => {
             'title',
         ],
         CirclePorcentaje: ['color', 'title'],
+        GaugeSpeed: ['color', 'title', 'description', 'description2'],
     }
     const autorizedDataKeys = {
         LiquidFillPorcentaje: ['maxValue', 'value', 'unidad'],
         CirclePorcentaje: ['maxValue', 'value'],
+        GaugeSpeed: ['maxValue', 'value', 'unidad'],
     }
     return {
         autorizedConfigKeys: autorizedConfigKeys[type],
@@ -148,6 +151,7 @@ const statusChart = async (req, res) => {
 const validationsTypes = {
     LiquidFillPorcentaje: LiquidFillSchema,
     CirclePorcentaje: CirclePorcentajeSchema,
+    GaugeSpeed: GaugeSpeedSchema,
 }
 
 module.exports = {
