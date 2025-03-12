@@ -2,6 +2,7 @@ const { z } = require('zod')
 
 const LiquidFillSchema = z
     .object({
+        order: z.number().optional(),
         type: z.string({ message: 'type is required' }).min(1).max(255),
         border: z.boolean({ message: 'bordre debe ser booleano' }),
         color: z.string({ message: 'color debe ser strign' }).min(3).max(255),

@@ -1,6 +1,7 @@
 const { z } = require('zod')
 
 const CirclePorcentajeSchema = z.object({
+    order: z.number().optional(),
     title: z.string({ message: 'title is required' }).min(1).max(255),
     idVar: z.number({ message: 'idVar is required' }),
     maxValue: z.number({ message: 'maxValue is required' }),

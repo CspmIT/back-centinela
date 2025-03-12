@@ -1,6 +1,7 @@
 const { z } = require('zod')
 
 const GaugeSpeedSchema = z.object({
+    order: z.number().optional(),
     type: z.string({ message: 'type is required' }).min(1).max(255),
     title: z
         .string({ message: 'El titulo debe ser un string' })

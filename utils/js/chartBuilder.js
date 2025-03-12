@@ -20,6 +20,7 @@ class ChartBuilder {
             name: inputData.title,
             type: inputData.type,
             status: 1,
+            order: inputData.order,
         }
 
         const config = this.allowedConfigKeys.map((key) => {

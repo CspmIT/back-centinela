@@ -25,6 +25,7 @@ class ChartService {
                         include: [{ association: 'InfluxVars' }],
                     },
                 ],
+                order: [['order', 'ASC']],
             })
             return charts
         } catch (error) {

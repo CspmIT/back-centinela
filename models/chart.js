@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
             name: DataTypes.STRING,
             type: DataTypes.STRING,
             status: DataTypes.TINYINT,
+            order: DataTypes.INTEGER,
         },
         {
             sequelize,
