@@ -75,6 +75,7 @@ class ChartBuilder {
             name: chart.name,
             type: chart.type,
             status: chart.status,
+            order: chart.order,
         }
     }
 
