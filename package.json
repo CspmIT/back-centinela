@@ -27,6 +27,7 @@
 		"passport-jwt": "^4.0.1",
 		"sequelize": "^6.37.3",
 		"socket.io": "^4.8.1",
+		"ssh2": "^1.16.0",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {

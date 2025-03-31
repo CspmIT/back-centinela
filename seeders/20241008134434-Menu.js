@@ -10,7 +10,7 @@ module.exports = {
                 {
                     name: 'Dashboard',
                     link: 'home',
-                    icon: 'RiDashboardFill',
+                    icon: 'FaTachometerAlt',
                     level: '1',
                     group_menu: '1',
                     sub_menu: null,
@@ -45,7 +45,7 @@ module.exports = {
                 },
                 {
                     name: 'Graficos',
-                    link: 'config/graphic',
+                    link: 'config/allGraphic',
                     icon: 'FaChartLine',
                     level: '2',
                     group_menu: '2',
