@@ -55,6 +55,9 @@ const formatter = new Intl.DateTimeFormat('es-AR', {
 })
 
 const formatInfluxSeriesArray = (influxSeries) => {
+    if (influxSeries.length === 0) {
+        return []
+    }
     const series = new Array(influxSeries.length - 1)
     for (let i = 0; i < influxSeries.length - 1; i++) {
         const element = influxSeries[i]
