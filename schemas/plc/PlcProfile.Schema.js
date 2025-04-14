@@ -19,10 +19,10 @@ const vars = z.object({
     bit: z
         .number({ message: 'El bit debe ser numerico' })
         .int({ message: 'El bit debe ser un entero' })
-        .positive({ message: 'El bit debe ser positivo' })
+        .nonnegative({ message: 'El bit debe ser positivo' })
         .min(0, { message: 'El bit no puede ser menor que 0' })
         .max(7, { message: 'El bit no puede ser mayor que 7' }),
-    type: z.enum(['BOOL', 'INT', 'FLOAT', 'STRING', 'LONG', 'DOUBLE'], {
+    type: z.enum(['BOOL', 'BYTE', 'INT', 'FLOAT', 'STRING', 'LONG', 'DOUBLE'], {
         message: 'El tipo de dato enviado no es valido',
     }),
     field: z

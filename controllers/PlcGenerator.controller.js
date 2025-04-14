@@ -3,73 +3,92 @@ const fs = require('fs')
 const path = require('path')
 const { PLCSchema } = require('../schemas/plc/PlcProfile.Schema')
 const config_influx = require('../config/config_influx')
+const { PLCService } = require('../services/PLCService')
 
 const conn = new Client()
 
 const serverConfig = {
     host: '192.168.0.62', // Reemplaza con tu IP o dominio
     port: 22,
-    username: 'api-3-iot',
-    password: 'Celeron233', // O usa claves SSH en lugar de contraseña
+    username: 'only-ssh-user',
+    password: 'WUDgzP*coPt$xjXEH4Q*', // O usa claves SSH en lugar de contraseña
 }
 
-const filesToUpload = [
-    { localPath: 'test.txt', remotePath: '/home/api-3-iot/test.txt' },
-    // { localPath: 'archivo2.txt', remotePath: '/home/usuario/archivo2.txt' },
-    // { localPath: 'archivo3.txt', remotePath: '/home/usuario/archivo3.txt' },
-]
+async function execSSHConnection(filesToUpload, serviceName) {
+    return new Promise((resolve, reject) => {
+        conn.on('ready', () => {
+            console.log('Conectado al servidor')
 
-async function execSSHConnection() {
-    conn.on('ready', () => {
-        console.log('Conectado al servidor')
+            conn.sftp((err, sftp) => {
+                if (err) return reject(err)
 
-        conn.sftp((err, sftp) => {
-            if (err) throw err
+                let uploaded = 0
 
-            let uploaded = 0
-            filesToUpload.forEach((file) => {
-                sftp.fastPut(file.localPath, file.remotePath, (err) => {
-                    if (err)
-                        console.error(`Error subiendo ${file.localPath}:`, err)
-                    else
-                        console.log(
-                            `Subido: ${file.localPath} → ${file.remotePath}`
-                        )
+                filesToUpload.forEach((file) => {
+                    sftp.fastPut(file.localPath, file.remotePath, (err) => {
+                        if (err) {
+                            console.error(
+                                `Error subiendo ${file.localPath}:`,
+                                err
+                            )
+                            throw new Error(
+                                `Error subiendo ${file.localPath}: ${err}`
+                            )
+                        } else {
+                            console.log(
+                                `Subido: ${file.localPath} → ${file.remotePath}`
+                            )
+                        }
 
-                    uploaded++
-                    if (uploaded === filesToUpload.length) {
-                        ejecutarComandos()
-                    }
+                        uploaded++
+                        if (uploaded === filesToUpload.length) {
+                            ejecutarComandos(serviceName)
+                        }
+                    })
                 })
+
+                function ejecutarComandos(serviceName) {
+                    const comandos = [
+                        `sudo mv /tmp/${serviceName}.service /etc/systemd/system/${serviceName}.service`,
+                        `sudo mv /tmp/${serviceName}.timer /etc/systemd/system/${serviceName}.timer`,
+                        `sudo systemctl daemon-reload`,
+                        `sudo systemctl enable ${serviceName}.service`,
+                        `sudo systemctl start ${serviceName}.service`,
+                        `sudo systemctl enable ${serviceName}.timer`,
+                        `sudo systemctl start ${serviceName}.timer`,
+                    ]
+
+                    conn.exec(comandos.join(' && '), (err, stream) => {
+                        if (err) return reject(err)
+
+                        let stdout = ''
+                        let stderr = ''
+
+                        stream
+                            .on('close', () => {
+                                console.log(
+                                    'Comandos ejecutados, cerrando conexión'
+                                )
+                                conn.end()
+                                resolve({
+                                    success: stderr.length === 0,
+                                    output: stdout,
+                                    errorOutput: stderr,
+                                })
+                            })
+                            .on('data', (data) => {
+                                console.log('exito' + data)
+                                stdout += data.toString()
+                            })
+                            .stderr.on('data', (data) => {
+                                console.log('error' + data)
+                                stderr += data.toString()
+                            })
+                    })
+                }
             })
-        })
-
-        function ejecutarComandos() {
-            const comandos = [
-                'ls -l',
-                'whoami',
-                'echo "Ejecutando comandos en el servidor"',
-                'uptime',
-                'cat /etc/os-release',
-            ]
-
-            conn.exec(comandos.join(' && '), (err, stream) => {
-                if (err) throw err
-
-                stream
-                    .on('close', () => {
-                        console.log('Comandos ejecutados, cerrando conexión')
-                        conn.end()
-                    })
-                    .on('data', (data) => {
-                        console.log('Salida:\n' + data.toString())
-                    })
-                    .stderr.on('data', (data) => {
-                        console.error('Error:\n' + data.toString())
-                    })
-            })
-        }
-    }).connect(serverConfig)
+        }).connect(serverConfig)
+    })
 }
 
 // 1. Crear archivo .txt
@@ -112,7 +131,7 @@ Description=PLC ${data.serviceName}
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/api-3-iot/PLC_Service/Logo_v2.py /home/api-3-iot/PLC_Service/${data.serviceName}
+ExecStart=/usr/bin/python3 /home/api-3-iot/PLC_Service/Logo_v2.py /home/api-3-iot/PLC_Service/${data.serviceName}.txt
 Restart=always
 User=api-3-iot
 WorkingDirectory=/home/api-3-iot/PLC_Service/
@@ -152,11 +171,20 @@ const writeAllFiles = (data) => {
     fs.writeFileSync(serviceFilePath, createServiceFile(data).trim())
     fs.writeFileSync(timerFilePath, createTimerFile(data).trim())
 
-    return {
-        profile: `${basePath}/${data.serviceName}.txt`,
-        service: `${basePath}/${data.serviceName}.service`,
-        timer: `${basePath}/${data.serviceName}.timer`,
-    }
+    return [
+        {
+            localPath: `${basePath}/${data.serviceName}.txt`,
+            remotePath: `/home/api-3-iot/PLC_Service/${data.serviceName}.txt`,
+        },
+        {
+            localPath: `${basePath}/${data.serviceName}.service`,
+            remotePath: `/tmp/${data.serviceName}.service`,
+        },
+        {
+            localPath: `${basePath}/${data.serviceName}.timer`,
+            remotePath: `/tmp/${data.serviceName}.timer`,
+        },
+    ]
 }
 
 const createPLCProfile = async (req, res) => {
@@ -169,9 +197,36 @@ const createPLCProfile = async (req, res) => {
 
     const files = writeAllFiles(plcProfile.data)
 
-    return res.status(200).json(files)
+    try {
+        const result = await execSSHConnection(
+            files,
+            plcProfile.data.serviceName
+        )
+
+        const { newPLCProfile, pointsData, varsData } = await PLCService.save(
+            plcProfile.data
+        )
+
+        return res.status(200).json({
+            message: 'Perfil creado y archivos subidos correctamente',
+            sshResult: result,
+            plc: newPLCProfile,
+            points: pointsData,
+            vars: varsData,
+        })
+    } catch (error) {
+        return res
+            .status(500)
+            .json({ message: 'Error al subir archivos en ssh' }, error)
+    }
+}
+
+const searchAllPLC = async (req, res) => {
+    const PLCProfiles = await PLCService.search()
+    res.status(200).json(PLCProfiles)
 }
 
 module.exports = {
     createPLCProfile,
+    searchAllPLC,
 }
