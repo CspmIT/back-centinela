@@ -8,10 +8,10 @@ const { PLCService } = require('../services/PLCService')
 const conn = new Client()
 
 const serverConfig = {
-    host: '192.168.0.62', // Reemplaza con tu IP o dominio
-    port: 22,
-    username: 'only-ssh-user',
-    password: 'WUDgzP*coPt$xjXEH4Q*', // O usa claves SSH en lugar de contraseña
+    host: process.env.SERVER_HOST, // Reemplaza con tu IP o dominio
+    port: process.env.SERVER_PORT,
+    username: process.env.SERVER_USERNAME,
+    password: process.env.SERVER_PASS, // O usa claves SSH en lugar de contraseña
 }
 
 async function execSSHConnection(filesToUpload, serviceName) {
@@ -51,11 +51,6 @@ async function execSSHConnection(filesToUpload, serviceName) {
                     const comandos = [
                         `sudo mv /tmp/${serviceName}.service /etc/systemd/system/${serviceName}.service`,
                         `sudo mv /tmp/${serviceName}.timer /etc/systemd/system/${serviceName}.timer`,
-                        `sudo systemctl daemon-reload`,
-                        `sudo systemctl enable ${serviceName}.service`,
-                        `sudo systemctl start ${serviceName}.service`,
-                        `sudo systemctl enable ${serviceName}.timer`,
-                        `sudo systemctl start ${serviceName}.timer`,
                     ]
 
                     conn.exec(comandos.join(' && '), (err, stream) => {
@@ -189,6 +184,7 @@ const writeAllFiles = (data) => {
 
 const createPLCProfile = async (req, res) => {
     const plc = req.body
+    plc.status = 0
     const plcProfile = PLCSchema.safeParse(plc)
 
     if (!plcProfile.success) {
@@ -226,7 +222,42 @@ const searchAllPLC = async (req, res) => {
     res.status(200).json(PLCProfiles)
 }
 
+const deleteFilePLC = async (req, res) => {
+    try {
+        const { id } = req.params
+
+        const profile = await PLCService.searchByID(id)
+        if (profile[0].status !== 0) {
+            return res.status(400).json({
+                message:
+                    'Primero debe desactivar el plc para poder elimnar el perfil.',
+            })
+        }
+        const updatePLC = await PLCService.updateStatus(profile[0].id, 2)
+
+        return res.status(200).json({ message: updatePLC })
+    } catch (error) {
+        console.error(error)
+        return res.status(400).json(error)
+    }
+}
+
+const searchById = async (req, res) => {
+    try {
+        const { id } = req.params
+
+        const profile = await PLCService.searchByID(id)
+
+        return res.status(200).json(profile)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).json(error)
+    }
+}
+
 module.exports = {
     createPLCProfile,
     searchAllPLC,
+    searchById,
+    deleteFilePLC,
 }

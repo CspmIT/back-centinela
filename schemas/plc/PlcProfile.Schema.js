@@ -72,6 +72,10 @@ const PLCSchema = z.object({
     vars: z
         .array(vars)
         .min(1, { message: 'Debe haber al menos una variable configurada' }),
+    status: z
+        .number({ message: 'El estado debe ser numerico' })
+        .positive({ message: 'El estado debe ser positivo' })
+        .int({ message: 'El estado debe ser un entero' }),
 })
 
 module.exports = {

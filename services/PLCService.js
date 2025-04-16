@@ -1,3 +1,4 @@
+const { where } = require('sequelize')
 const { db } = require('../models')
 
 class PLCService {
@@ -16,6 +17,39 @@ class PLCService {
             return PLCProfile
         } catch (error) {
             throw new Error('Ocurrio un error al obtener los perfiles de PLC')
+        }
+    }
+
+    static async searchByID(id) {
+        try {
+            const PLCProfile = await db.PLCProfile.findAll({
+                where: { id: id },
+                include: [
+                    {
+                        association: 'PointsPLC',
+                    },
+                    {
+                        association: 'VarsPLC',
+                    },
+                ],
+            })
+            return PLCProfile
+        } catch (error) {
+            throw new Error('Ocurrio un error al obtener los perfiles de PLC')
+        }
+    }
+
+    static async updateStatus(profileID, newStatus) {
+        try {
+            const plcUpdate = await db.PLCProfile.findByPk(profileID)
+            if (!plcUpdate) {
+                throw new Error('No se encontro el plc')
+            }
+
+            const result = await plcUpdate.update({ status: newStatus })
+            return result
+        } catch (error) {
+            throw new Error(error)
         }
     }
 

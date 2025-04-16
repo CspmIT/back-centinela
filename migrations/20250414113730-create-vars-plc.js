@@ -57,11 +57,6 @@ module.exports = {
                 allowNull: false,
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
             },
-            status: {
-                type: Sequelize.INTEGER,
-                allowNull: false,
-                comment: '0 = desactivado - 1 = activo',
-            },
         })
         // Add hooks to handle created_at and updated_at
         queryInterface.sequelize.addHook('beforeCreate', (instance) => {

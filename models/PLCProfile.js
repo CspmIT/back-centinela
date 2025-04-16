@@ -28,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
             serviceName: DataTypes.STRING,
             rack: DataTypes.INTEGER,
             slot: DataTypes.INTEGER,
+            status: DataTypes.INTEGER,
         },
         {
             sequelize,

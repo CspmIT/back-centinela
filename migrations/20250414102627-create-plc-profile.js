@@ -47,6 +47,12 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
             },
+            status: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                comment:
+                    '0 = desactivado - 1 = activo - 2 = desactivado y eliminado',
+            },
             createdAt: {
                 type: Sequelize.DATE,
                 allowNull: false,
