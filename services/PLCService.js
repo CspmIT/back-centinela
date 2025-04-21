@@ -53,6 +53,67 @@ class PLCService {
         }
     }
 
+    static async update(PLCProfile) {
+        const t = await db.sequelize.transaction()
+        try {
+            const { id, points, vars, ...plcData } = PLCProfile
+
+            // Actualizar el perfil existente
+            const existingPLCProfile = await db.PLCProfile.findByPk(id, {
+                transaction: t,
+            })
+            if (!existingPLCProfile) {
+                throw new Error('Perfil PLC no encontrado')
+            }
+
+            await existingPLCProfile.update(plcData, { transaction: t })
+
+            // Eliminar puntos y variables existentes
+            await db.PointsPLC.destroy({
+                where: { plcId: id },
+                transaction: t,
+            })
+
+            await db.VarsPLC.destroy({
+                where: { plcId: id },
+                transaction: t,
+            })
+
+            // Crear nuevos puntos
+            const pointsData = await Promise.all(
+                points.map(async (point) => {
+                    const newPoint = await db.PointsPLC.create(
+                        { ...point, plcId: id },
+                        { transaction: t }
+                    )
+                    return newPoint
+                })
+            )
+
+            // Crear nuevas variables
+            const varsData = await Promise.all(
+                vars.map(async (variable) => {
+                    const newVar = await db.VarsPLC.create(
+                        { ...variable, plcId: id },
+                        { transaction: t }
+                    )
+                    return newVar
+                })
+            )
+
+            await t.commit()
+            return {
+                updatedPLCProfile: existingPLCProfile,
+                pointsData,
+                varsData,
+            }
+        } catch (error) {
+            await t.rollback()
+            console.error(error)
+            throw new Error('Ocurrió un error al actualizar el perfil del PLC')
+        }
+    }
+
     static async save(PLCProfile) {
         const t = await db.sequelize.transaction()
         try {

@@ -19,9 +19,11 @@ module.exports = (sequelize, DataTypes) => {
                 'BOOL',
                 'BYTE',
                 'INT',
+                'UINT',
                 'FLOAT',
                 'STRING',
                 'LONG',
+                'ULONG',
                 'DOUBLE'
             ),
             field: DataTypes.STRING,

@@ -22,9 +22,22 @@ const vars = z.object({
         .nonnegative({ message: 'El bit debe ser positivo' })
         .min(0, { message: 'El bit no puede ser menor que 0' })
         .max(7, { message: 'El bit no puede ser mayor que 7' }),
-    type: z.enum(['BOOL', 'BYTE', 'INT', 'FLOAT', 'STRING', 'LONG', 'DOUBLE'], {
-        message: 'El tipo de dato enviado no es valido',
-    }),
+    type: z.enum(
+        [
+            'BOOL',
+            'BYTE',
+            'INT',
+            'UINT',
+            'FLOAT',
+            'STRING',
+            'LONG',
+            'ULONG',
+            'DOUBLE',
+        ],
+        {
+            message: 'El tipo de dato enviado no es valido',
+        }
+    ),
     field: z
         .string({ message: 'El field debe ser un string' })
         .min(3, { message: 'El field debe tener un minimo de 3 caracteres' })
@@ -34,6 +47,10 @@ const ipv4Regex =
     /^(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})(\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})){3}$/
 
 const PLCSchema = z.object({
+    id: z
+        .number({ message: 'El id debe ser numerico' })
+        .positive({ message: 'El id debe ser positivo' })
+        .optional(),
     topic: z
         .string({ message: 'El topico debe ser un string' })
         .trim()
@@ -74,7 +91,7 @@ const PLCSchema = z.object({
         .min(1, { message: 'Debe haber al menos una variable configurada' }),
     status: z
         .number({ message: 'El estado debe ser numerico' })
-        .positive({ message: 'El estado debe ser positivo' })
+        .nonnegative({ message: 'El estado debe ser positivo' })
         .int({ message: 'El estado debe ser un entero' }),
 })
 

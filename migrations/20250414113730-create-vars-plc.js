@@ -28,9 +28,11 @@ module.exports = {
                     'BOOL',
                     'BYTE',
                     'INT',
+                    'UINT',
                     'FLOAT',
                     'STRING',
                     'LONG',
+                    'ULONG',
                     'DOUBLE'
                 ),
                 allowNull: false,
