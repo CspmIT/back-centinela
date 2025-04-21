@@ -16,6 +16,7 @@ const InfluxRoutes = require('./routes/InfluxData.routes')
 const BombsRoutes = require('./routes/Bombs.routes')
 const ChartSeries = require('./routes/ChartSeries.routes')
 const MapRoutes = require('./routes/Maps.routes')
+const PLCRoutes = require('./routes/PlcGenerator.routes')
 // Configuracion para los cors
 const corsConfig = require('./config/app.conf')
 app.use(corsConfig)
@@ -33,6 +34,7 @@ app.use('/api', InfluxRoutes)
 app.use('/api', BombsRoutes)
 app.use('/api', ChartSeries)
 app.use('/api', MapRoutes)
+app.use('/api/plc', PLCRoutes)
 
 // const server = http.createServer(app)
 // app.use('/api', async (req, res, next) => {

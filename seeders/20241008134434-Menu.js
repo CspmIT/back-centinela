@@ -67,6 +67,18 @@ module.exports = {
                     createdAt: date,
                     updatedAt: date,
                 },
+                {
+                    name: 'Variables',
+                    link: 'config/vars',
+                    icon: 'HiVariable',
+                    level: '2',
+                    group_menu: '2',
+                    sub_menu: '2',
+                    status: '1',
+                    order: 6,
+                    createdAt: date,
+                    updatedAt: date,
+                },
             ],
             {}
         )
