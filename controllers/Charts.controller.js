@@ -1,3 +1,4 @@
+const { BooleanChartSchema } = require('../schemas/charts/BooleanChart.Schema')
 const {
     CirclePorcentajeSchema,
 } = require('../schemas/charts/CirclePorcentaje.Schema')
@@ -121,11 +122,13 @@ const getKeys = (type) => {
         ],
         CirclePorcentaje: ['color', 'title'],
         GaugeSpeed: ['color', 'title', 'description', 'description2'],
+        BooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
     }
     const autorizedDataKeys = {
         LiquidFillPorcentaje: ['maxValue', 'value', 'unidad'],
         CirclePorcentaje: ['maxValue', 'value'],
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
+        BooleanChart: ['value'],
     }
     return {
         autorizedConfigKeys: autorizedConfigKeys[type],
@@ -154,6 +157,7 @@ const validationsTypes = {
     LiquidFillPorcentaje: LiquidFillSchema,
     CirclePorcentaje: CirclePorcentajeSchema,
     GaugeSpeed: GaugeSpeedSchema,
+    BooleanChart: BooleanChartSchema
 }
 
 module.exports = {
