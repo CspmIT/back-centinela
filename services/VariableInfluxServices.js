@@ -58,8 +58,23 @@ const getVarById = async (id) => {
     }
 }
 
+const handleStatusInfluxVar = async (id) => {
+    try {
+        const [influxVar] = await db.InfluxVar.findAll({ where: { id: id } })
+        const currentStatus = influxVar.status
+        const result = await influxVar.update({
+            status: influxVar.status === false ? 1 : 0,
+        })
+
+        return currentStatus !== result.status
+    } catch (error) {
+        throw error
+    }
+}
+
 module.exports = {
     saveVariableInflux,
     getVariables,
     getVarById,
+    handleStatusInfluxVar,
 }
