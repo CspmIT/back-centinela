@@ -1,10 +1,19 @@
+const { Op, literal } = require('sequelize')
 const { db } = require('../models')
 
 class ChartService {
-    static async getCharts() {
+    static async getSimpleCharts() {
         try {
             const charts = await db.Chart.findAll({
-                where: { status: 1 },
+                where: {
+                    status: 1,
+                    [Op.and]: [
+                        literal(`NOT EXISTS (
+                        SELECT 1 FROM \`ChartsSeriesData\`
+                        WHERE \`ChartsSeriesData\`.\`chart_id\` = \`Chart\`.\`id\`
+                    )`),
+                    ],
+                },
                 include: [
                     {
                         association: 'ChartConfig',
@@ -20,8 +29,27 @@ class ChartService {
                         include: [{ association: 'InfluxVars' }],
                         order: [['id', 'ASC']],
                     },
+                ],
+                order: [['order', 'ASC']],
+            })
+            return charts
+        } catch (error) {
+            throw error
+        }
+    }
+
+    static async getSeriesCharts() {
+        try {
+            const charts = await db.Chart.findAll({
+                where: { status: 1 },
+                include: [
+                    {
+                        association: 'ChartConfig',
+                        attributes: ['key', 'value', 'type'],
+                    },
                     {
                         association: 'ChartSeriesData',
+                        required: true,
                         include: [{ association: 'InfluxVars' }],
                     },
                 ],

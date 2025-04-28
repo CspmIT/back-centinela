@@ -7,9 +7,18 @@ const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
 const { ChartService } = require('../services/ChartService')
 const ChartBuilder = require('../utils/js/chartBuilder')
 
-const findCharts = async (req, res) => {
+const findIndicatorCharts = async (req, res) => {
     try {
-        const charts = await ChartService.getCharts()
+        const charts = await ChartService.getSimpleCharts()
+        res.status(200).json(charts)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+const findSeriesCharts = async (req, res) => {
+    try {
+        const charts = await ChartService.getSeriesCharts()
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -157,12 +166,13 @@ const validationsTypes = {
     LiquidFillPorcentaje: LiquidFillSchema,
     CirclePorcentaje: CirclePorcentajeSchema,
     GaugeSpeed: GaugeSpeedSchema,
-    BooleanChart: BooleanChartSchema
+    BooleanChart: BooleanChartSchema,
 }
 
 module.exports = {
     createChart,
-    findCharts,
+    findIndicatorCharts,
+    findSeriesCharts,
     findAllCharts,
     statusChart,
     findChartById,
