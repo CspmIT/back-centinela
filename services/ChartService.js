@@ -83,6 +83,10 @@ class ChartService {
                     include: [{ association: 'InfluxVars' }],
                     order: [['id', 'ASC']],
                 },
+                {
+                    association: 'ChartSeriesData',
+                    include: [{ association: 'InfluxVars' }],
+                },
             ],
         })
         return chart.shift()
@@ -188,6 +192,49 @@ class ChartService {
 
             t.commit()
             return newChart
+        } catch (error) {
+            await t.rollback()
+            throw Error(error)
+        }
+    }
+
+    static async editSeriesChart(chartId, chart, chartConfig, chartSeriesData) {
+        const t = await db.sequelize.transaction()
+        try {
+            // Actualizar el gráfico principal
+            await db.Chart.update(chart, {
+                where: { id: chartId },
+                transaction: t,
+            })
+
+            // Eliminar configuraciones anteriores
+            await db.ChartConfig.destroy({
+                where: { chart_id: chartId },
+                transaction: t,
+            })
+
+            // Crear nuevas configuraciones
+            const newChartConfig = chartConfig.map((config) => {
+                return { ...config, chart_id: chartId }
+            })
+            await db.ChartConfig.bulkCreate(newChartConfig, { transaction: t })
+
+            // Eliminar datos de series anteriores
+            await db.ChartSeriesData.destroy({
+                where: { chart_id: chartId },
+                transaction: t,
+            })
+
+            // Crear nuevos datos de series
+            const newChartSeriesData = chartSeriesData.map((data) => {
+                return { ...data, chart_id: chartId }
+            })
+            await db.ChartSeriesData.bulkCreate(newChartSeriesData, {
+                transaction: t,
+            })
+
+            await t.commit()
+            return await db.Chart.findByPk(chartId)
         } catch (error) {
             await t.rollback()
             throw Error(error)
