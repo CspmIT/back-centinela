@@ -121,8 +121,42 @@ async function InfluxChart(req, res) {
         res.status(400).json({ message: error.message })
     }
 }
+
+//funcion para consultar multiples variables y obtener un dato de influx
+async function getMultipleSimpleValues(req, res) {
+	try {
+		const { user = false } = req;
+		if (!user?.influx_name) throw new Error('Tenes que estar logeado');
+
+		const influxVars = req.body;
+		const results = {};
+
+		for (const item of influxVars) {
+			const influxVar = item.varsInflux;
+			const query = await generateQuery(influxVar); // genera `|> last()`
+            console.log(`Query para ${item.id}:`, query);
+			const data = await ConsultaInflux(query, user.influx_name);
+
+			// Buscar el primer valor que coincida con el campo
+			const valueRow = Array.isArray(data)
+				? data.find((row) => row._field === influxVar.calc_field)
+				: null;
+
+			results[item.id] = valueRow ? valueRow._value : null;
+		}
+
+		return res.status(200).json(results);
+	} catch (error) {
+		console.error('Error en getMultipleSimpleValues:', error);
+		res.status(500).json({ error: error.message });
+	}
+}
+
+
+
 module.exports = {
     InfluxConection,
     InfluxChart,
     SeriesDataInflux,
+    getMultipleSimpleValues,
 }
