@@ -4,7 +4,7 @@ const User = require('../src/models/User.model.js')
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: 'Cspmdesarrollo03'
+    secretOrKey: process.env.SECRET,
 }
 
 module.exports = new JwtStrategy(opts, (jwt_payload, done) => {
