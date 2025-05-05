@@ -1,4 +1,4 @@
-const { Op } = require('sequelize')
+const { Op, where } = require('sequelize')
 const { db } = require('../models')
 
 /**
@@ -10,15 +10,16 @@ const { db } = require('../models')
  *
  */
 const getMenus = async () => {
-	try {
-		const Variables = await db.Menu.findAll({
-			order: [['order']],
-		})
-		if (!Variables) throw new Error('No existe ningun reconectador')
-		return Variables.map((variable) => variable.get({ plain: true }))
-	} catch (error) {
-		throw error
-	}
+    try {
+        const Variables = await db.Menu.findAll({
+            where: { status: 1 },
+            order: [['order']],
+        })
+        if (!Variables) throw new Error('No existe ningun reconectador')
+        return Variables.map((variable) => variable.get({ plain: true }))
+    } catch (error) {
+        throw error
+    }
 }
 
 /**
@@ -32,19 +33,19 @@ const getMenus = async () => {
  *
  */
 const saveMenu = async (dataMenu, transaction) => {
-	try {
-		const [Menu, created] = await db.Menu.findOrCreate({
-			where: { id: dataMenu.id },
-			defaults: { ...dataMenu },
-			transaction,
-		})
-		if (!created) {
-			await Menu.update(dataMenu, { transaction })
-		}
-		return Menu
-	} catch (error) {
-		throw error
-	}
+    try {
+        const [Menu, created] = await db.Menu.findOrCreate({
+            where: { id: dataMenu.id },
+            defaults: { ...dataMenu },
+            transaction,
+        })
+        if (!created) {
+            await Menu.update(dataMenu, { transaction })
+        }
+        return Menu
+    } catch (error) {
+        throw error
+    }
 }
 
 /**
@@ -58,17 +59,22 @@ const saveMenu = async (dataMenu, transaction) => {
  *
  */
 const listPermissionUser = async (data) => {
-	try {
-		const filters =
-			data.type == 'id_user'
-				? { [Op.or]: [{ [`${data.type}`]: data.id }, { id_profile: data.profile }] }
-				: { [`${data.type}`]: data.profile }
-		const Menus = await db.Menu_selected.findAll({ where: filters })
-		if (!Menus) throw new Error('No existe ningun reconectador')
-		return Menus.map((menu) => menu.get({ plain: true }))
-	} catch (error) {
-		throw error
-	}
+    try {
+        const filters =
+            data.type == 'id_user'
+                ? {
+                      [Op.or]: [
+                          { [`${data.type}`]: data.id },
+                          { id_profile: data.profile },
+                      ],
+                  }
+                : { [`${data.type}`]: data.profile }
+        const Menus = await db.Menu_selected.findAll({ where: filters })
+        if (!Menus) throw new Error('No existe ningun reconectador')
+        return Menus.map((menu) => menu.get({ plain: true }))
+    } catch (error) {
+        throw error
+    }
 }
 
 /**
@@ -82,24 +88,24 @@ const listPermissionUser = async (data) => {
  *
  */
 const saveMenu_Selected = async (dataMenu, transaction) => {
-	try {
-		const [Menu_selected, created] = await db.Menu_selected.findOrCreate({
-			where: { id: dataMenu.id },
-			defaults: { ...dataMenu },
-			transaction,
-		})
-		if (!created) {
-			await Menu_selected.update(dataMenu, { transaction })
-		}
-		return Menu_selected
-	} catch (error) {
-		throw error
-	}
+    try {
+        const [Menu_selected, created] = await db.Menu_selected.findOrCreate({
+            where: { id: dataMenu.id },
+            defaults: { ...dataMenu },
+            transaction,
+        })
+        if (!created) {
+            await Menu_selected.update(dataMenu, { transaction })
+        }
+        return Menu_selected
+    } catch (error) {
+        throw error
+    }
 }
 
 module.exports = {
-	getMenus,
-	saveMenu,
-	listPermissionUser,
-	saveMenu_Selected,
+    getMenus,
+    saveMenu,
+    listPermissionUser,
+    saveMenu_Selected,
 }

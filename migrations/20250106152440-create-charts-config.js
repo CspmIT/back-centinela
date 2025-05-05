@@ -1,0 +1,57 @@
+'use strict'
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+    async up(queryInterface, Sequelize) {
+        await queryInterface.createTable('ChartsConfig', {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+            },
+            chart_id: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: 'Charts',
+                    key: 'id',
+                },
+            },
+            key: {
+                type: Sequelize.STRING(255),
+                allowNull: false,
+            },
+            value: {
+                type: Sequelize.TEXT,
+                allowNull: false,
+            },
+            type: {
+                type: Sequelize.STRING(255),
+                allowNull: false,
+            },
+            createdAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+            },
+            updatedAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+            },
+        })
+        // Add hooks to handle created_at and updated_at
+        queryInterface.sequelize.addHook('beforeCreate', (instance) => {
+            instance.createdAt = new Date()
+            instance.updatedAt = new Date()
+        })
+
+        queryInterface.sequelize.addHook('beforeUpdate', (instance) => {
+            instance.updatedAt = new Date()
+        })
+    },
+
+    async down(queryInterface, Sequelize) {
+        await queryInterface.dropTable('ChartsConfig')
+    },
+}

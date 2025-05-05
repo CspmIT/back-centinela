@@ -1,6 +1,6 @@
 const { db } = require('../models')
 const { getMenus, saveMenu, listPermissionUser, saveMenu_Selected } = require('../services/MenuService')
-const { getAllUser, getAllProfile } = require('../services/UserService')
+const { getAllUser, getAllUserPass, getAllProfile } = require('../services/UserService')
 
 async function getListUser(req, res) {
 	try {
@@ -108,6 +108,20 @@ async function deleteMenu(req, res) {
 	}
 }
 
+async function getListUserPass(req, res) {
+	try {
+		const listUser = await getAllUserPass()
+
+		return res.status(200).json(listUser)
+	} catch (error) {
+		if (error.errors) {
+			res.status(500).json(error.errors)
+		} else {
+			res.status(400).json(error.message)
+		}
+	}
+}
+
 async function getPermission(req, res) {
 	try {
 		if (!req.query.type || !req.query.id || !req.query.profile)
@@ -160,4 +174,5 @@ module.exports = {
 	deleteMenu,
 	getPermission,
 	savePermission,
+	getListUserPass,
 }
