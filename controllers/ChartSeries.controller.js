@@ -57,6 +57,34 @@ const addSeriesChart = async (req, res) => {
     }
 }
 
+const updateSeriesChart = async (req, res) => {
+    try {
+        const { id } = req.params
+        const baseChartSerie = req.body
+        const validChart = LineChartSchema.safeParse(baseChartSerie)
+
+        if (!validChart.success) {
+            return res.status(400).json(validChart.error.errors)
+        }
+        const { chart, chartConfig, chartSeriesData } =
+            await generateSeriesChart(validChart.data)
+
+        console.log(chart)
+        console.log(chartConfig)
+        console.log(chartSeriesData)
+        const savedChart = await ChartService.editSeriesChart(
+            id,
+            chart,
+            chartConfig,
+            chartSeriesData
+        )
+        res.status(200).json(savedChart)
+    } catch (error) {
+        return res.status(400).json(error.message)
+    }
+}
+
 module.exports = {
     addSeriesChart,
+    updateSeriesChart,
 }

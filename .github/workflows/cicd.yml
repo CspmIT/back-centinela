@@ -68,6 +68,10 @@ jobs:
                      --build-arg DB_PASS=${{ secrets.DB_PASS }} \
                      --build-arg DB_NAME=${{ secrets.DB_NAME }} \
                      --build-arg DB_USER=${{ secrets.DB_USER }} \
+                     --build-arg SERVER_HOST=${{ secrets.SERVER_HOST }} \
+                     --build-arg SERVER_PORT=${{ secrets.SERVER_PORT }} \
+                     --build-arg SERVER_USERNAME=${{ secrets.SERVER_USERNAME }} \
+                     --build-arg SERVER_PASS=${{ secrets.SERVER_PASS }} \
                      --build-arg SECRET=${{ secrets.SECRET }} \
                     -t ${{ secrets.DOCKER_USER_NAME }}/${REPO_NAME}:${{ needs.bump.outputs.new_tag }} .
                   docker push ${{ secrets.DOCKER_USER_NAME }}/${REPO_NAME}:${{ needs.bump.outputs.new_tag }}

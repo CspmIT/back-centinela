@@ -25,6 +25,14 @@ module.exports = {
         INFLUX_ORG_ID: '28698fafe99fd9bf',
         INFLUX_BUCKET: 'IOT',
     },
+    Sensors_Morteros_Interna: {
+        INFLUX_URL: 'http://192.168.0.113:086',
+        INFLUXDB_TOKEN:
+            'dU_XBAIf38ZpMUnCl0uNhsah3XDVZ7I-bfg1VXG8eG8YMdtnhy7gggbq_8TL-MszLt8ZYxAg_8UwFNilKHlrOg==',
+        INFLUX_ORG: 'CoopMorteros',
+        INFLUX_ORG_ID: '28698fafe99fd9bf',
+        INFLUX_BUCKET: 'IOT',
+    },
     Sensors_Externos: {
         INFLUX_URL: 'http://192.168.0.68:8086',
         INFLUXDB_TOKEN:
