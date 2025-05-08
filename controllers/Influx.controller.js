@@ -134,7 +134,6 @@ async function getMultipleSimpleValues(req, res) {
 		for (const item of influxVars) {
 			const influxVar = item.varsInflux;
 			const query = await generateQuery(influxVar); // genera `|> last()`
-            console.log(`Query para ${item.id}:`, query);
 			const data = await ConsultaInflux(query, user.influx_name);
 
 			// Buscar el primer valor que coincida con el campo

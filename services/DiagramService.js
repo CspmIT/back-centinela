@@ -64,6 +64,13 @@ const ObjectsDiagram = async (id) => {
 				  association: 'polylines',
 				  required: false,
 				  where: { status: 1 },
+				  include: [
+					{
+					  association: 'variable',
+					  required: false,
+					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+					},
+				  ],
 				},
 			  ],
 		})

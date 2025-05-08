@@ -9,7 +9,8 @@ module.exports = (sequelize, DataTypes) => {
 		 */
 		static associate(models) {
 			// define association here
-			this.belongsTo(models.Diagram, { foreignKey: 'id_diagram', as: 'Diagram' })
+			this.belongsTo(models.Diagram, { foreignKey: 'id_diagram', as: 'Diagram' })		
+			this.belongsTo(models.InfluxVar, { foreignKey: 'id_influxvars', as: 'variable' })
 		}
 	}
 	DiagramPolyline.init(

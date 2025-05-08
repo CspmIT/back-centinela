@@ -34,6 +34,7 @@ const saveDiagram = async (req, res) => {
           lines: deletedLines = [],
           texts: deletedTexts = [],
           images: deletedImages = [],
+          polylines: deletedPolylines = [],
         } = deleted;
   
         await Promise.all([
@@ -45,6 +46,9 @@ const saveDiagram = async (req, res) => {
             ),
             ...deletedImages.map((id) =>
               db.DiagramImage.update({ status: 0 }, { where: { id }, transaction })
+            ),
+            ...deletedPolylines.map((id) =>
+              db.DiagramPolyline.update({ status: 0 }, { where: { id }, transaction })
             ),
           ]);
       }
