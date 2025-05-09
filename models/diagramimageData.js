@@ -24,6 +24,12 @@ module.exports = (sequelize, DataTypes) => {
 		{
 			sequelize,
 			modelName: 'DiagramImageData',
+			indexes: [
+				{
+					unique: true,
+					fields: ['id_image', 'name_var']
+				}
+			]
 		}
 	)
 	return DiagramImageData

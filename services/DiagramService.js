@@ -18,15 +18,61 @@ const ObjectsDiagram = async (id) => {
 			where: { id: id, status: 1 },
 			include: [
 				{
-					association: 'images',
-					required: false,
-					where: { status: 1 },
-					include: [{ association: 'variables', required: false, where: { status: 1 } }],
+				  association: 'images',
+				  required: false,
+				  where: { status: 1 },
+				  include: [
+					{
+					  association: 'variables',
+					  required: false,
+					  where: { status: 1 },
+					  include: [
+						{
+						  association: 'variable',
+						  required: false,
+						  attributes: ['unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+						},
+					  ],
+					},
+				  ],
 				},
-				{ association: 'lines', required: false, where: { status: 1 } },
-				{ association: 'texts', required: false, where: { status: 1 } },
-				{ association: 'polylines', required: false, where: { status: 1 } },
-			],
+				{
+				  association: 'lines',
+				  required: false,
+				  where: { status: 1 },
+				  include: [
+					{
+					  association: 'variable',
+					  required: false,
+					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+					},
+				  ],
+				},
+				{
+				  association: 'texts',
+				  required: false,
+				  where: { status: 1 },
+				  include: [
+					{
+					  association: 'variable',
+					  required: false,
+					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+					},
+				  ],
+				},
+				{
+				  association: 'polylines',
+				  required: false,
+				  where: { status: 1 },
+				  include: [
+					{
+					  association: 'variable',
+					  required: false,
+					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+					},
+				  ],
+				},
+			  ],
 		})
 
 		return Diagram
@@ -101,7 +147,7 @@ const saveImageDiagram = async (image, transaction, id_diagram) => {
 const saveImageData = async (variable, transaction) => {
 	try {
 		const [DiagramImageData, created] = await db.DiagramImageData.findOrCreate({
-			where: [{ id_image: variable.id_image, name_var: variable.name_var }],
+			where: { id_image: variable.id_image, name_var: variable.name_var },
 			defaults: { ...variable },
 			transaction,
 		})
