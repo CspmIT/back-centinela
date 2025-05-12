@@ -2,10 +2,7 @@ const { db } = require('../models')
 
 const listDiagram = async () => {
 	try {
-		const Diagram = await db.Diagram.findAll({
-			where: { status: 1 },
-		})
-
+		const Diagram = await db.Diagram.findAll()
 		return Diagram
 	} catch (error) {
 		throw error
@@ -15,7 +12,7 @@ const listDiagram = async () => {
 const ObjectsDiagram = async (id) => {
 	try {
 		const Diagram = await db.Diagram.findAll({
-			where: { id: id, status: 1 },
+			where: { id: id},
 			include: [
 				{
 				  association: 'images',
