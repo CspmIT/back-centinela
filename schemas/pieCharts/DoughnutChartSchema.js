@@ -2,7 +2,7 @@ const { z } = require('zod')
 const categories = z.object({
     name: z.string().min(1, 'La categoría es obligatoria'),
     color: z.string().min(1, 'El color es obligatorio'),
-    value: z.number().min(1, 'El valor es obligatorio'),
+    var_id: z.number().min(1, 'El valor es obligatorio'),
 })
 
 const SchemaWithDates = z.object({
