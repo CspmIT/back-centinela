@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: 'chart_id',
                 as: 'ChartSeriesData',
             })
+            this.hasMany(models.ChartPieData, {
+                foreignKey: 'chart_id',
+                as: 'ChartPieData',
+            })
         }
     }
 

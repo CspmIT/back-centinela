@@ -5,18 +5,15 @@ const secret = process.env.SECRET
 const verifyToken = async (req, res, next) => {
     try {
         const token = req.cookies.token || req.headers?.authorization?.slice(7)
-        console.log('Token recibido:', token)
 
         // Verifico que el token exista
         if (!token) {
             throw new Error('No se ha enviado el token')
         }
-        console.log('pasa')
         const decoded = jwt.verify(token, secret)
         if (!new Date(decoded.exp) > new Date()) {
             throw new Error('El token ha expirado')
         }
-        console.log('pasa expired')
         await changeSchema(decoded.iss.substring(4))
         const user = await getUser(decoded.sub)
         if (!user) {
