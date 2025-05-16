@@ -25,12 +25,10 @@ const createPieChart = async (req, res) => {
 
         const chart = chartRepo.getChart()
         chart.status = 1
-        const config = chartRepo.getConfig()
         const chartData = chartRepo.getData()
 
-        const saveChartData = ChartService.createPieChart(
+        const saveChartData = await ChartService.createPieChart(
             chart,
-            config,
             chartData
         )
 

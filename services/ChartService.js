@@ -262,20 +262,14 @@ class ChartService {
         }
     }
 
-    static async createPieChart(chart, chartConfig, chartPieData) {
+    static async createPieChart(chart, chartPieData) {
         const t = await db.sequelize.transaction()
         try {
             const newChart = await db.Chart.create(chart, { transaction: t })
 
-            const newChartConfig = chartConfig.map((config) => {
-                return { ...config, chart_id: newChart.id }
-            })
-            await db.ChartConfig.bulkCreate(newChartConfig, { transaction: t })
-
             const newChartPieData = chartPieData.map((data) => {
                 return { ...data, chart_id: newChart.id }
             })
-            console.log(newChartPieData)
             await db.ChartPieData.bulkCreate(newChartPieData, {
                 transaction: t,
             })

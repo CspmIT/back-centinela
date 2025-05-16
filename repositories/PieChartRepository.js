@@ -22,9 +22,6 @@ class PieChart {
 
         this.title = parsed.title
         this.categories = parsed.categories
-        this.lastValue = parsed.lastValue
-        this.startDate = parsed.startDate ?? false
-        this.endDate = parsed.endDate ?? false
     }
 }
 
@@ -42,32 +39,6 @@ class PieChartRepository {
             name: this.chart.title,
             type: 'PieChart',
         }
-    }
-
-    getConfig() {
-        const config = [
-            {
-                key: 'lastValue',
-                value: this.chart.lastValue,
-                type: typeof this.chart.lastValue,
-            },
-        ]
-        if (!this.chart.lastValue) {
-            const moreConfig = [
-                {
-                    key: 'startDate',
-                    value: this.chart.startDate,
-                    type: typeof this.chart.startDate,
-                },
-                {
-                    key: 'endDate',
-                    value: this.chart.endDate,
-                    type: typeof this.chart.endDate,
-                },
-            ]
-            config.push(...moreConfig)
-        }
-        return config
     }
 
     getData() {
