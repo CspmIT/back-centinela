@@ -6,12 +6,12 @@ const {
     statusChart,
     findChartById,
     editChart,
-    findSeriesCharts,
+    findDashboardCharts,
 } = require('../controllers/Charts.controller')
 const { verifyToken } = require('../middleware/Auth.middleware')
 
 routes.get('/indicatorCharts', verifyToken, findIndicatorCharts)
-routes.get('/seriesCharts', verifyToken, findSeriesCharts)
+routes.get('/dashboardCharts', verifyToken, findDashboardCharts)
 routes.get('/charts/:id', verifyToken, findChartById)
 routes.get('/allCharts', verifyToken, findAllCharts)
 routes.post('/charts', verifyToken, createChart)

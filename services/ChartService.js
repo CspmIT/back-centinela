@@ -12,6 +12,10 @@ class ChartService {
                         SELECT 1 FROM \`ChartsSeriesData\`
                         WHERE \`ChartsSeriesData\`.\`chart_id\` = \`Chart\`.\`id\`
                     )`),
+                        literal(`NOT EXISTS (
+                        SELECT 1 FROM \`ChartsPieData\`
+                        WHERE \`ChartsPieData\`.\`chart_id\` = \`Chart\`.\`id\`
+                    )`),
                     ],
                 },
                 include: [
@@ -38,10 +42,22 @@ class ChartService {
         }
     }
 
-    static async getSeriesCharts() {
+    static async getDashboardCharts() {
         try {
             const charts = await db.Chart.findAll({
-                where: { status: 1 },
+                where: {
+                    status: 1,
+                    [Op.or]: [
+                        literal(`EXISTS (
+                        SELECT 1 FROM \`ChartsSeriesData\` 
+                        WHERE \`ChartsSeriesData\`.\`chart_id\` = \`Chart\`.\`id\`
+                    )`),
+                        literal(`EXISTS (
+                        SELECT 1 FROM \`ChartsPieData\` 
+                        WHERE \`ChartsPieData\`.\`chart_id\` = \`Chart\`.\`id\`
+                    )`),
+                    ],
+                },
                 include: [
                     {
                         association: 'ChartConfig',
@@ -49,7 +65,12 @@ class ChartService {
                     },
                     {
                         association: 'ChartSeriesData',
-                        required: true,
+                        required: false,
+                        include: [{ association: 'InfluxVars' }],
+                    },
+                    {
+                        association: 'ChartPieData',
+                        required: false,
                         include: [{ association: 'InfluxVars' }],
                     },
                 ],
@@ -235,6 +256,26 @@ class ChartService {
 
             await t.commit()
             return await db.Chart.findByPk(chartId)
+        } catch (error) {
+            await t.rollback()
+            throw Error(error)
+        }
+    }
+
+    static async createPieChart(chart, chartPieData) {
+        const t = await db.sequelize.transaction()
+        try {
+            const newChart = await db.Chart.create(chart, { transaction: t })
+
+            const newChartPieData = chartPieData.map((data) => {
+                return { ...data, chart_id: newChart.id }
+            })
+            await db.ChartPieData.bulkCreate(newChartPieData, {
+                transaction: t,
+            })
+
+            t.commit()
+            return newChart
         } catch (error) {
             await t.rollback()
             throw Error(error)
