@@ -7,8 +7,10 @@ async function generateQuery(influxVar) {
         calc_type_period,
         calc_unit,
         calc_unit_period,
+        calc_unit_topic,
     } = influxVar
-    const query = `|> range(start: -${calc_time}${calc_unit})
+    const timeUnit = calc_unit || calc_unit_topic
+    const query = `|> range(start: -${calc_time}${timeUnit})
         |> filter(fn: (r) => r["topic"] == "${calc_topic}")
         |> filter(fn: (r) => r["_field"] == "${calc_field}")
         |> aggregateWindow(every: ${calc_period}${calc_unit_period}, fn: ${calc_type_period}, createEmpty: false)
