@@ -25,6 +25,7 @@ async function getSimpleInfluxData(influxVar, user) {
     if (influxVar?.type) {
         influxVar = influxVar.varsInflux
     }
+    console.log(influxVar)
     const query = await generateQuery(Object.values(influxVar).shift())
     const { influx_name = false } = user
     if (!influx_name) {
@@ -124,34 +125,32 @@ async function InfluxChart(req, res) {
 
 //funcion para consultar multiples variables y obtener un dato de influx
 async function getMultipleSimpleValues(req, res) {
-	try {
-		const { user = false } = req;
-		if (!user?.influx_name) throw new Error('Tenes que estar logeado');
+    try {
+        const { user = false } = req
+        if (!user?.influx_name) throw new Error('Tenes que estar logeado')
 
-		const influxVars = req.body;
-		const results = {};
+        const influxVars = req.body
+        const results = {}
 
-		for (const item of influxVars) {
-			const influxVar = item.varsInflux;
-			const query = await generateQuery(influxVar); // genera `|> last()`
-			const data = await ConsultaInflux(query, user.influx_name);
+        for (const item of influxVars) {
+            const influxVar = item.varsInflux
+            const query = await generateQuery(influxVar) // genera `|> last()`
+            const data = await ConsultaInflux(query, user.influx_name)
 
-			// Buscar el primer valor que coincida con el campo
-			const valueRow = Array.isArray(data)
-				? data.find((row) => row._field === influxVar.calc_field)
-				: null;
+            // Buscar el primer valor que coincida con el campo
+            const valueRow = Array.isArray(data)
+                ? data.find((row) => row._field === influxVar.calc_field)
+                : null
 
-			results[item.id] = valueRow ? valueRow._value : null;
-		}
+            results[item.id] = valueRow ? valueRow._value : null
+        }
 
-		return res.status(200).json(results);
-	} catch (error) {
-		console.error('Error en getMultipleSimpleValues:', error);
-		res.status(500).json({ error: error.message });
-	}
+        return res.status(200).json(results)
+    } catch (error) {
+        console.error('Error en getMultipleSimpleValues:', error)
+        res.status(500).json({ error: error.message })
+    }
 }
-
-
 
 module.exports = {
     InfluxConection,
