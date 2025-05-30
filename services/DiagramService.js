@@ -2,10 +2,7 @@ const { db } = require('../models')
 
 const listDiagram = async () => {
 	try {
-		const Diagram = await db.Diagram.findAll({
-			where: { status: 1 },
-		})
-
+		const Diagram = await db.Diagram.findAll()
 		return Diagram
 	} catch (error) {
 		throw error
@@ -15,7 +12,7 @@ const listDiagram = async () => {
 const ObjectsDiagram = async (id) => {
 	try {
 		const Diagram = await db.Diagram.findAll({
-			where: { id: id, status: 1 },
+			where: { id: id},
 			include: [
 				{
 				  association: 'images',
@@ -75,7 +72,35 @@ const ObjectsDiagram = async (id) => {
 			  ],
 		})
 
-		return Diagram
+		const normalizedDiagram = Diagram.map((d) => {
+			const diagramObj = d.toJSON();
+		  
+			// Normalizamos cada imagen
+			diagramObj.images = diagramObj.images?.map((img) => {
+			  const variable = img.variables?.[0]?.variable;
+			  return {
+				...img,
+				dataInflux: variable
+				  ? {
+					  id_variable: img.variables[0].id_influxvars, // clave que usarás al guardar
+					  name: variable.name || img.variables[0].name_var,
+					  unit: variable.unit,
+					  type: variable.type,
+					  calc: variable.calc,
+					  varsInflux: variable.varsInflux,
+					  equation: variable.equation,
+					  status: variable.status,
+					}
+				  : null,
+			  };
+			});
+		  
+			return diagramObj;
+		  });
+		  
+		  return normalizedDiagram;
+
+	
 	} catch (error) {
 		throw error
 	}
