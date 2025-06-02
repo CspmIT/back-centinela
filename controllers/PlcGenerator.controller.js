@@ -142,9 +142,10 @@ const createPLCProfile = async (req, res) => {
 
     const files = writeAllFiles(plcProfile.data)
 
+    console.log('llega con exito')
     try {
         await ssh.uploadFiles(files)
-
+        console.log('pasa el upload')
         // Mover los archivos .service y .timer a systemd
         const serviceName = plcProfile.data.serviceName
         const commands = [
