@@ -25,7 +25,6 @@ async function getSimpleInfluxData(influxVar, user) {
     if (influxVar?.type) {
         influxVar = influxVar.varsInflux
     }
-    console.log(influxVar)
     const query = await generateQuery(Object.values(influxVar).shift())
     const { influx_name = false } = user
     if (!influx_name) {
