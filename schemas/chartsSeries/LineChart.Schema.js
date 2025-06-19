@@ -49,6 +49,7 @@ const LineChartSchema = z.object({
     type: z.string({ message: 'Debe existir el tipo' }),
     xAxisConfig: xAxisConfigSchema,
     yData: z.array(yDataSchema),
+    order: z.string('El order es invalido').optional()
 })
 
 module.exports = {

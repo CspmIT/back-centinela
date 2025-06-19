@@ -13,6 +13,7 @@ const generateSeriesChart = async (validatedChart) => {
         name: validatedChart.title,
         type: validatedChart.type,
         status: 1,
+        order: validatedChart.order
     }
 
     const configs = Object.keys(validatedChart.xAxisConfig)
