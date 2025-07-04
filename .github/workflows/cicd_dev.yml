@@ -47,6 +47,7 @@ jobs:
               run: |
                   REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
                   docker build \
+                     --no-cache \
                      --build-arg DB_HOST=${{ secrets.DB_DEVHOST }} \
                      --build-arg DB_PASS=${{ secrets.DB_DEVPASS }} \
                      --build-arg DB_NAME=${{ secrets.DB_DEVNAME }} \
@@ -54,7 +55,7 @@ jobs:
                      --build-arg SERVER_HOST=${{ secrets.SERVER_HOST }} \
                      --build-arg SERVER_PORT=${{ secrets.SERVER_PORT }} \
                      --build-arg SERVER_USERNAME=${{ secrets.SERVER_USERNAME }} \
-                     --build-arg SERVER_PASS=${{ secrets.SERVER_PASS }} \
+                     --build-arg SERVER_PASS='${{ secrets.SERVER_PASS }}' \
                      --build-arg SECRET=${{ secrets.SECRET }} \
                     -t ${{ secrets.DOCKER_USER_NAME }}/${REPO_NAME}:${{ needs.bump.outputs.new_tag }} .
                   docker push ${{ secrets.DOCKER_USER_NAME }}/${REPO_NAME}:${{ needs.bump.outputs.new_tag }}

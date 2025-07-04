@@ -144,7 +144,6 @@ const createPLCProfile = async (req, res) => {
 
     try {
         await ssh.uploadFiles(files)
-
         // Mover los archivos .service y .timer a systemd
         const serviceName = plcProfile.data.serviceName
         const commands = [
@@ -170,6 +169,7 @@ const createPLCProfile = async (req, res) => {
         })
     } catch (error) {
         deleteLocalFiles(plcProfile.data.serviceName)
+        console.error(error)
         return res
             .status(500)
             .json({ message: 'Error al subir archivos en ssh' })
