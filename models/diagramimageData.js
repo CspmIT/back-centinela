@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
 			id_influxvars: DataTypes.INTEGER,
 			name_var: DataTypes.STRING,
 			show_var: DataTypes.BOOLEAN,
+			position_var: DataTypes.STRING,
 			status: DataTypes.BOOLEAN,
 		},
 		{

@@ -68,6 +68,7 @@ const saveDiagram = async (req, res) => {
             id_influxvars: image.variables[nameVar].id_variable,
             name_var: nameVar,
             show_var: image.variables[nameVar].show,
+            position_var: image.variables[nameVar].position,
             status: true,
           }));
 
