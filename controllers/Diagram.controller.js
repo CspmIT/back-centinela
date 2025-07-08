@@ -69,6 +69,7 @@ const saveDiagram = async (req, res) => {
             name_var: nameVar,
             show_var: image.variables[nameVar].show,
             position_var: image.variables[nameVar].position,
+            max_value_var: image.variables[nameVar].max_value,
             status: true,
           }));
 
