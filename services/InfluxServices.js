@@ -15,12 +15,12 @@ const ConsultaInflux = async (query, influxName) => {
 
         const influxDB = new InfluxDB({ url, token })
         const queryApi = influxDB.getQueryApi(org)
-
         const fluxQuery = `from(bucket: "${bucket}") ${query}`
         const results = []
 
         await new Promise((resolve, reject) => {
             queryApi.queryRows(fluxQuery, {
+
                 next(row, tableMeta) {
                     results.push(tableMeta.toObject(row))
                 },
@@ -32,8 +32,9 @@ const ConsultaInflux = async (query, influxName) => {
                 },
             })
         })
-
+        
         return results
+        
     } catch (error) {
         throw new Error(error.message || 'Error en ConsultaInflux')
     }
