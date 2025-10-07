@@ -79,32 +79,33 @@ const alarmsChecked = async (user) => {
 		raw: true,
 		nest: true,
 	  });
+
+	  const results = [] 
   
 	  for (const alarm of alarms) {
 		const influxVar = alarm.variable;
 		if (!influxVar) {
-		  console.warn(`⚠️ La alarma "${alarm.name}" no tiene variable vinculada`);
+		  console.log(`La alarma "${alarm.name}" no tiene variable vinculada`);
 		  continue;
 		}
   
 		let currentValue;
-		// 🔹 Tipo history
+		// Tipo history
 		if (influxVar.type === 'history') {
 		  const historyData = await getHistorcalInfluxData(influxVar, user);
 		  if (!Array.isArray(historyData) || historyData.length === 0) {
-			console.warn(`⚠️ Sin datos históricos para ${alarm.name}`);
+			console.log(`Sin datos históricos para ${alarm.name}`);
 			continue;
 		  }
 		  const lastPoint = historyData.at(-1); // último valor
 		  currentValue = parseFloat(lastPoint?._value);
-		  console.log(`📈 Valor histórico actual de "${alarm.name}":`, currentValue);
 		}
   
-		// 🔹 Tipo simple
+		// Tipo simple
 		else {
 		  const simpleData = await getSimpleInfluxData(influxVar, user);
 		  if (!simpleData || Object.keys(simpleData).length === 0) {
-			console.warn(`⚠️ Sin datos simples para ${alarm.name}`);
+			console.log(`Sin datos simples para ${alarm.name}`);
 			continue;
 		  }
 		  const firstKey = Object.keys(simpleData)[0];
@@ -114,7 +115,7 @@ const alarmsChecked = async (user) => {
   
 		if (isNaN(currentValue)) continue;
   
-		// 🔹 Evaluar condición
+		// Evaluar condición
 		let triggered = false;
 		switch (alarm.condition) {
 		  case '>': triggered = currentValue > alarm.value; break;
@@ -125,16 +126,28 @@ const alarmsChecked = async (user) => {
 		  case 'entre': triggered = currentValue >= alarm.value && currentValue <= alarm.value2; break;
 		}
   
-		console.log(`🧩 ${alarm.name}: valor ${currentValue}, triggered: ${triggered}`);
-  
-		// 🔹 Registrar log
 		if (triggered) {
-		  await createAlarmLog(alarm, currentValue);
-		  console.log(`🔔 Alarma "${alarm.name}" disparada con valor ${currentValue}`);
+			await createAlarmLog(alarm, currentValue);
+			const msg = `Alarma "${alarm.name}" disparada`;
+			console.log(msg);
+			results.push({ alarm: alarm.name, status: 'triggered', value: currentValue, message: msg });
+		  } else {
+			const msg = `Alarma "${alarm.name}" no disparada`;
+			results.push({ alarm: alarm.name, status: 'ok', value: currentValue, message: msg });
+		  }
 		}
-	  }
+	
+		// Si ninguna se disparó
+		const triggeredCount = results.filter(r => r.status === 'triggered').length;
+		if (triggeredCount === 0) {
+		  console.log('No se disparó ninguna alarma');
+		  return { message: 'No se disparó ninguna alarma', results };
+		}
+	
+		return { message: `${triggeredCount} alarma(s) disparada(s)`, results };
+	
 	} catch (err) {
-	  console.error('❌ Error en checkAlarms:', err);
+	  console.error('Error en checkAlarms:', err);
 	  throw err;
 	}
   };

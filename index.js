@@ -6,6 +6,7 @@ const app = express()
 const cookieParser = require('cookie-parser')
 
 // Rutas
+const publicRoutes = require('./routes/Public.routes')
 const AuthRoutes = require('./routes/Auth.routes')
 const UserRoutes = require('./routes/User.routes')
 const DiagramRoutes = require('./routes/Diagram.routes')
@@ -30,6 +31,7 @@ app.use('/api', AuthRoutes)
 app.use('/api/healtcheck', (req, res) => {
     res.status(200).send('Servicio corriendo')
 })
+app.use('/api', publicRoutes)
 app.use('/api', UserRoutes)
 app.use('/api', DiagramRoutes)
 app.use('/api', VarInfluxRoutes)

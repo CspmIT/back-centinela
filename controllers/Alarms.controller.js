@@ -78,11 +78,37 @@ const checkAlarms = async (req, res) => {
   }
 }
 
+// 🔒 versión pública, con validación por secret o por influx_name
+const publicCheckAlarms = async (req, res) => {
+  try {
+    const { secret, influx_name } = req.query
+
+    // Validar secret simple
+    if (!secret || secret !== process.env.ALARMS_SECRET_KEY) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (!influx_name) {
+      return res.status(400).json({ error: 'Missing influx_name parameter' })
+    }
+   
+
+    const user = { influx_name }
+    const result = await alarmsChecked(user)
+
+    return res.status(200).json({ result })
+  } catch (err) {
+    console.error('Error en publicCheckAlarms:', err)
+    return res.status(500).json({ error: err.message })
+  }
+}
+
 
 module.exports = {
   getAlarms,
   addAlarms,
   editAlarm,
   toggleAlarmStatus,
-  checkAlarms
+  checkAlarms,
+  publicCheckAlarms
 }
