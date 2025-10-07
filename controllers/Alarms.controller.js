@@ -78,20 +78,14 @@ const checkAlarms = async (req, res) => {
   }
 }
 
-// 🔒 versión pública, con validación por secret o por influx_name
+// versión pública para ejecutar con cronjob
 const publicCheckAlarms = async (req, res) => {
   try {
-    const { secret, influx_name } = req.query
-
-    // Validar secret simple
-    if (!secret || secret !== process.env.ALARMS_SECRET_KEY) {
-      return res.status(403).json({ error: 'Unauthorized' })
-    }
+    const { influx_name } = req.query
 
     if (!influx_name) {
-      return res.status(400).json({ error: 'Missing influx_name parameter' })
+      return res.status(400).json({ error: 'Se necesita influx_name como parametro' })
     }
-   
 
     const user = { influx_name }
     const result = await alarmsChecked(user)
