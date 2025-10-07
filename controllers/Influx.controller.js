@@ -22,6 +22,7 @@ async function InfluxConection(req, res) {
     }
 }
 async function getSimpleInfluxData(influxVar, user) {
+    
     if (influxVar?.type) {
         influxVar = influxVar.varsInflux
     }
@@ -30,6 +31,7 @@ async function getSimpleInfluxData(influxVar, user) {
     if (!influx_name) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
     }
+    console.log('Influx_Name', influx_name)
     const dataInflux = await ConsultaInflux(query, influx_name)
     const formattedData = await fomratInfluxData(dataInflux)
     return formattedData
@@ -39,7 +41,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
     }
 
-    const topics = [...new Set(queryObject.map((q) => q.topic))] // Evita duplicados
+    const topics = [...new Set(queryObject.map((q) => q.topic))]
     const fields = [...new Set(queryObject.map((q) => q.field))]
 
     const batchQuery = `
@@ -91,11 +93,11 @@ async function SeriesDataInflux(req, res) {
 
 async function getHistorcalInfluxData(influxVar, user) {
     const query = await generateQueryHistorical(influxVar)
+
     const { influx_name = false } = user
     if (!influx_name) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
     }
-
     const dataInflux = await ConsultaInflux(query, influx_name)
     const formattedData = fomratInfluxDataArray(dataInflux)
     return formattedData
@@ -154,6 +156,8 @@ async function getMultipleSimpleValues(req, res) {
 module.exports = {
     InfluxConection,
     InfluxChart,
+    getSimpleInfluxData,
+    getHistorcalInfluxData,
     SeriesDataInflux,
     getMultipleSimpleValues,
 }

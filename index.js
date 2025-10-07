@@ -6,6 +6,7 @@ const app = express()
 const cookieParser = require('cookie-parser')
 
 // Rutas
+const publicRoutes = require('./routes/Public.routes')
 const AuthRoutes = require('./routes/Auth.routes')
 const UserRoutes = require('./routes/User.routes')
 const DiagramRoutes = require('./routes/Diagram.routes')
@@ -17,6 +18,7 @@ const ChartSeries = require('./routes/ChartSeries.routes')
 const MapRoutes = require('./routes/Maps.routes')
 const PLCRoutes = require('./routes/PlcGenerator.routes')
 const ChartPie = require('./routes/ChartPie.routes')
+const Alarms = require('./routes/Alarms.routes')
 // Configuracion para los cors
 const corsConfig = require('./config/app.conf')
 app.use(corsConfig)
@@ -29,6 +31,7 @@ app.use('/api', AuthRoutes)
 app.use('/api/healtcheck', (req, res) => {
     res.status(200).send('Servicio corriendo')
 })
+app.use('/api', publicRoutes)
 app.use('/api', UserRoutes)
 app.use('/api', DiagramRoutes)
 app.use('/api', VarInfluxRoutes)
@@ -39,6 +42,7 @@ app.use('/api', ChartSeries)
 app.use('/api', MapRoutes)
 app.use('/api/plc', PLCRoutes)
 app.use('/api', ChartPie)
+app.use('/api', Alarms)
 
 // const server = http.createServer(app)
 // app.use('/api', async (req, res, next) => {
