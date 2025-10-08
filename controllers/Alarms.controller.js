@@ -98,8 +98,8 @@ const publicCheckAlarms = async (req, res) => {
 
     for (const schema of schemasToCheck) {
       try {
+        
         await changeSchema(schema)
-
         const user = { influx_name, db }
         const result = await alarmsChecked(user)
 
@@ -109,7 +109,7 @@ const publicCheckAlarms = async (req, res) => {
         })
 
       } catch (err) {
-        console.error(`❌ Error revisando alarmas en ${schema}:`, err)
+        console.error(`Error revisando alarmas en ${schema}:`, err)
         results.push({
           schema,
           error: err.message
@@ -119,7 +119,7 @@ const publicCheckAlarms = async (req, res) => {
 
     return res.json({ results })
   } catch (err) {
-    console.error('❌ Error general en publicCheckAlarms:', err)
+    console.error('Error general en publicCheckAlarms:', err)
     return res.status(500).json({ error: err.message })
   }
 }
