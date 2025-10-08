@@ -1,9 +1,9 @@
 const listClients = [
-    // 'capyclo', 
-    // 'cespal', 
+    'capyclo', 
+    'cespal', 
     'coopmorteros', 
-    // 'san_genaro',
-    'desarrollo'
+    'san_genaro',
+    //'desarrollo'
 ]
 
 module.exports = {
