@@ -78,7 +78,7 @@ const alarmsChecked = async (user) => {
 			raw: true,
 			nest: true,
 		});
-		console.log(!alarms.length ? 'No hay alarmas activas' : `Se encontraron ${alarms.length} alarmas activas`);
+		console.log(!alarms.length ? 'No hay alarmas activas' : `Se encontraron ${alarms.length} alarmas activas en la db: ${db.sequelize.config.database}`);
 		const results = []
 
 		for (const alarm of alarms) {
@@ -109,7 +109,7 @@ const alarmsChecked = async (user) => {
 				}
 				const firstKey = Object.keys(simpleData)[0];
 				currentValue = parseFloat(simpleData[firstKey]?.value);
-				console.log(`💧 Valor simple actual de "${alarm.name}":`, currentValue);
+				console.log(`Variable: "${alarm.name}", Último valor:`, currentValue);
 			}
 
 			if (isNaN(currentValue)) continue;
