@@ -7,7 +7,6 @@ const createAlarmLog = async (alarm, currentValue) => {
     }) disparada con valor ${currentValue}`
 
     const log = await db.Logs_Alarms.create({
-      alarm_id: alarm.id,
       message,
       value: currentValue,
       triggeredAt: new Date(),
