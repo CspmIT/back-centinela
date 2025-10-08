@@ -78,7 +78,7 @@ const alarmsChecked = async (user) => {
 			raw: true,
 			nest: true,
 		});
-		console.log(!alarms.length ? 'No hay alarmas activas' : `Se encontraron ${alarms.length} alarmas activas en la db: ${db.sequelize.config.database}`);
+		console.log(!alarms.length ? `No hay alarmas activas en la db: ${db.sequelize.config.database}` : `Se encontraron ${alarms.length} alarmas activas en la db: ${db.sequelize.config.database}`);
 		const results = []
 
 		for (const alarm of alarms) {
@@ -104,7 +104,7 @@ const alarmsChecked = async (user) => {
 			else {
 				const simpleData = await getSimpleInfluxData(influxVar, user);
 				if (!simpleData || Object.keys(simpleData).length === 0) {
-					console.log(`Sin datos simples para ${alarm.name}`);
+					console.log(`No se obtuvo el dato para ${alarm.name}`);
 					continue;
 				}
 				const firstKey = Object.keys(simpleData)[0];
@@ -126,7 +126,7 @@ const alarmsChecked = async (user) => {
 			}
 
 			if (triggered) {
-				await createAlarmLog(alarm, currentValue);
+				await createAlarmLog(db, alarm, currentValue);
 				const msg = `Alarma "${alarm.name}" disparada`;
 				console.log(msg);
 				results.push({ alarm: alarm.name, status: 'triggered', value: currentValue, message: msg });
