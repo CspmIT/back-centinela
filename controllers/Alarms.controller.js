@@ -6,7 +6,7 @@ const {
   alarmsChecked,
   listLogs_Alarms
 } = require('../services/AlarmsService')
-const { createDbForSchema } = require('../models')
+const { changeSchema, db } = require('../models')
 const { listClients } = require('../utils/js/clients')
 
 const getAlarms = async (req, res) => {
@@ -98,8 +98,9 @@ const publicCheckAlarms = async (req, res) => {
 
     for (const schema of schemasToCheck) {
       try {
-        const tempDb = createDbForSchema(schema)
-        const user = { influx_name, db: tempDb }
+        await changeSchema(schema)
+
+        const user = { influx_name, db }
         const result = await alarmsChecked(user)
 
         results.push({
@@ -122,6 +123,7 @@ const publicCheckAlarms = async (req, res) => {
     return res.status(500).json({ error: err.message })
   }
 }
+
 
 const getLog_Alarms = async (req, res) => {
   try {
