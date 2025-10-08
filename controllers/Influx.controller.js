@@ -31,7 +31,7 @@ async function getSimpleInfluxData(influxVar, user) {
     if (!influx_name) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
     }
-    console.log('Influx_Name', influx_name)
+
     const dataInflux = await ConsultaInflux(query, influx_name)
     const formattedData = await fomratInfluxData(dataInflux)
     return formattedData
