@@ -72,7 +72,6 @@ const changeStatusAlarm = async (id, status) => {
 const alarmsChecked = async (user) => {
 	try {
 		const db = user.db
-		console.log(db)
 		const alarms = await db.Alarms.findAll({
 			where: { status: true },
 			include: [{ model: db.InfluxVar, as: 'variable' }],
