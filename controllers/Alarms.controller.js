@@ -3,10 +3,11 @@ const {
   postAlarm,
   updateAlarm,
   changeStatusAlarm,
-  alarmsChecked
+  alarmsChecked,
+  listLogs_Alarms
 } = require('../services/AlarmsService')
-
-const { db } = require('../models')
+const { changeSchema, db } = require('../models')
+const { listClients } = require('../utils/js/clients')
 
 const getAlarms = async (req, res) => {
   try {
@@ -78,22 +79,64 @@ const checkAlarms = async (req, res) => {
   }
 }
 
-// versión pública para ejecutar con cronjob
 const publicCheckAlarms = async (req, res) => {
   try {
-    const { influx_name } = req.query
+    const { schemaName, influx_name } = req.query
+    if (!influx_name) return res.status(400).json({ error: 'Falta influx_name' })
 
-    if (!influx_name) {
-      return res.status(400).json({ error: 'Se necesita influx_name como parametro' })
+    let schemasToCheck = []
+
+    // Si se pasó un schema puntual, solo revisamos ese
+    if (schemaName) {
+      schemasToCheck = [schemaName]
+    } else {
+      // Si no, revisamos todos los clientes
+      schemasToCheck = listClients.map(client => `masagua_${client}`)
     }
 
-    const user = { influx_name }
-    const result = await alarmsChecked(user)
+    const results = []
 
-    return res.status(200).json({ result })
+    for (const schema of schemasToCheck) {
+      try {
+        await changeSchema(schema)
+
+        const user = { influx_name, db }
+        const result = await alarmsChecked(user)
+
+        results.push({
+          schema,
+          status: 'ok',
+          result
+        })
+
+      } catch (err) {
+        console.error(`❌ Error revisando alarmas en ${schema}:`, err)
+        results.push({
+          schema,
+          status: 'error',
+          error: err.message
+        })
+      }
+    }
+
+    return res.json({ results })
   } catch (err) {
-    console.error('Error en publicCheckAlarms:', err)
+    console.error('❌ Error general en publicCheckAlarms:', err)
     return res.status(500).json({ error: err.message })
+  }
+}
+
+
+const getLog_Alarms = async (req, res) => {
+  try {
+    const Logs_Alarms = await listLogs_Alarms();
+    return res.status(200).json(Logs_Alarms)
+  } catch (error) {
+    if (error.errors) {
+      res.status(500).json(error.errors)
+    } else {
+      res.status(400).json(error.message)
+    }
   }
 }
 
@@ -104,5 +147,6 @@ module.exports = {
   editAlarm,
   toggleAlarmStatus,
   checkAlarms,
-  publicCheckAlarms
+  publicCheckAlarms,
+  getLog_Alarms
 }

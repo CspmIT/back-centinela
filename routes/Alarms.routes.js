@@ -5,7 +5,8 @@ const {
     addAlarms,
     editAlarm,
     toggleAlarmStatus,
-    checkAlarms
+    checkAlarms,
+    getLog_Alarms
  } = require('../controllers/Alarms.controller')
 const router = express.Router()
 
@@ -14,5 +15,7 @@ router.post('/createAlarm', verifyToken, addAlarms)
 router.put('/updateAlarm/:id', verifyToken, editAlarm)
 router.put('/changeStatusAlarm', verifyToken, toggleAlarmStatus)
 router.get('/checkAlarms', verifyToken, checkAlarms)
+
+router.get('/listAlerts', verifyToken, getLog_Alarms)
 
 module.exports = router
