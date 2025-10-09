@@ -76,4 +76,33 @@ const changeSchema = async (schemaName) => {
     db.Sequelize = Sequelize
 }
 
-module.exports = { db, changeSchema }
+// funcion para crear un objeto db para un schema especifico (se usa en alarmas publicas)
+const createDbForSchema = (schemaName) => {
+    const sequelize = new Sequelize(
+        schemaName,
+        config.username,
+        config.password,
+        config
+    )
+
+    const localDb = {}
+    fs.readdirSync(__dirname)
+        .filter(file => file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js' && file.indexOf('.test.js') === -1)
+        .forEach(file => {
+            const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes)
+            localDb[model.name] = model
+        })
+
+    Object.keys(localDb).forEach(modelName => {
+        if (localDb[modelName].associate) {
+            localDb[modelName].associate(localDb)
+        }
+    })
+
+    localDb.sequelize = sequelize
+    localDb.Sequelize = Sequelize
+    return localDb
+}
+
+
+module.exports = { db, changeSchema, createDbForSchema }
