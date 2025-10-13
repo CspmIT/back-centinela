@@ -1,3 +1,5 @@
+const { default: axios } = require("axios")
+
 const createAlarmLog = async (db, alarm, currentValue) => {
   try {
     const message = `Alarma "${alarm.name}" (${alarm.condition} ${alarm.value}${
@@ -30,12 +32,53 @@ const createAlarmLog = async (db, alarm, currentValue) => {
     })
 
     console.log('Log creado:', message, ', en base de datos:', db.sequelize.config.database)
+    
+    try {
+      await discord(db, message)
+    } catch (err) {
+      console.error('No se pudo notificar a Discord:', err.message)
+    }
+
     return log
 
   } catch (error) {
     console.error('Error al crear log:', error)
     throw error
   }
+}
+
+const discordCredentials = async (db) => {
+	try {
+		const credentials = await db.Discord.findOne({ where: { id: 1 } })
+		return credentials
+	} catch (e) {
+		throw e
+	}
+}
+
+async function discord(db, message) {
+	try {
+		const credentials = await discordCredentials(db)
+		const webhookURL = `https://discord.com/api/webhooks/${credentials.webhook}`
+		await axios.post(webhookURL, {
+			username: credentials.username,
+			avatar_url: 'https://masagua.cooptech.com.ar/assets/img/Logo/Logo.png',
+			content: message,
+			embeds: [
+				{
+					title: `:warning: ${message}`,
+					// description: `**Ingresa a Mas Agua para ver todos los detalles**`,
+					color: 15007526,
+					url: 'https://masagua.cooptech.com.ar/',
+					// image: {
+					// 	url: 'https://masagua.cooptech.com.ar/assets/img/Logo/Logo.png',
+					// },
+				},
+			],
+		})
+	} catch (error) {
+		console.error('Error al enviar mensaje:', error)
+	}
 }
 
 module.exports = {
