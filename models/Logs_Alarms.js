@@ -4,6 +4,7 @@ const { Model } = require('sequelize')
 module.exports = (sequelize, DataTypes) => {
   class Logs_Alarms extends Model {
     static associate(models) {
+      this.belongsTo(models.Alarms, { foreignKey: 'alarmId', as: 'alarm' })
     }
   }
 
@@ -15,10 +16,17 @@ module.exports = (sequelize, DataTypes) => {
       value: {
         type: DataTypes.STRING,
       },
+      viewed: {
+        type: DataTypes.BOOLEAN,
+      },
       triggeredAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW, 
       },
+      alarmId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      }
     },
     {
       sequelize,

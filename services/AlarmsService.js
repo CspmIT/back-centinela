@@ -153,14 +153,14 @@ const alarmsChecked = async (user) => {
 
 const listLogs_Alarms = async () => {
 	try {
-	  const Logs_Alarms = await db.Logs_Alarms.findAll()
-  
-	  // Formatear y restar 3 horas
+		const Logs_Alarms = await db.Logs_Alarms.findAll({
+			order: [['triggeredAt', 'DESC']],
+		  })
+		  
 	  const formattedLogs = Logs_Alarms.map(log => {
 		const originalDate = new Date(log.triggeredAt)
-		const adjustedDate = new Date(originalDate.getTime() - 3 * 60 * 60 * 1000)
-		const formattedDate = adjustedDate.toLocaleString('es-AR', {
-			timeZone: 'America/Argentina/Buenos_Aires',
+		const formattedDate = originalDate.toLocaleString('es-AR', {
+			timeZone: 'America/Argentina/Cordoba',
 			hour12: false,
 			year: '2-digit',
 			month: '2-digit',
@@ -174,7 +174,7 @@ const listLogs_Alarms = async () => {
 		  triggeredAt: formattedDate
 		}
 	  })
-  
+	 
 	  return formattedLogs
 	} catch (error) {
 	  throw error

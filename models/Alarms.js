@@ -21,7 +21,13 @@ module.exports = (sequelize, DataTypes) => {
             value: DataTypes.FLOAT,
             value2: DataTypes.FLOAT,
             status: DataTypes.BOOLEAN,
+            repeatInterval: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+              }
         },
+        
         {
             sequelize,
             modelName: 'Alarms',
