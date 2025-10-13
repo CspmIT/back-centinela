@@ -15,6 +15,9 @@ module.exports = (sequelize, DataTypes) => {
       value: {
         type: DataTypes.STRING,
       },
+      viewed: {
+        type: DataTypes.BOOLEAN,
+      },
       triggeredAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW, 

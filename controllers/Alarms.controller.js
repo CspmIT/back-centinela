@@ -6,7 +6,7 @@ const {
   alarmsChecked,
   listLogs_Alarms
 } = require('../services/AlarmsService')
-const { createDbForSchema } = require('../models')
+const { createDbForSchema, db } = require('../models')
 const { listClients } = require('../utils/js/clients')
 
 const getAlarms = async (req, res) => {
@@ -121,6 +121,27 @@ const getLog_Alarms = async (req, res) => {
   }
 }
 
+const markAlertAsViewed = async (req, res) => {
+  try {
+    await db.Logs_Alarms.update({ viewed: true }, { where: { id: req.params.id } })
+    return res.json({ message: 'Alerta marcada como leida' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Error al marcar alerta' })
+  }
+}
+
+const getUnreadAlertCount = async (req, res) => {
+  try {
+    const count = await db.Logs_Alarms.count({
+      where: { viewed: 0 }
+    })
+    res.json({ count })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Error al contar alertas no vistas' })
+  }
+}
 
 module.exports = {
   getAlarms,
@@ -129,5 +150,7 @@ module.exports = {
   toggleAlarmStatus,
   checkAlarms,
   publicCheckAlarms,
-  getLog_Alarms
+  getLog_Alarms,
+  markAlertAsViewed,
+  getUnreadAlertCount
 }
