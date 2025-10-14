@@ -2,7 +2,7 @@ const { default: axios } = require("axios")
 
 const createAlarmLog = async (db, alarm, currentValue) => {
   try {
-    const message = `Alarma "${alarm.name}" (${alarm.condition} ${alarm.value}${
+    const message = `"${alarm.name}" (${alarm.condition} ${alarm.value}${
       alarm.condition === 'entre' ? ' y ' + alarm.value2 : ''
     }) disparada con valor ${currentValue}`
 
@@ -63,7 +63,7 @@ async function discord(db, message) {
 		await axios.post(webhookURL, {
 			username: credentials.username,
 			avatar_url: 'https://masagua.cooptech.com.ar/assets/img/Logo/Logo.png',
-			content: message,
+			content: `Nuevo registro de alarma.`,
 			embeds: [
 				{
 					title: `:warning: ${message}`,
