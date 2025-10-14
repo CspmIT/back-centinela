@@ -7,7 +7,7 @@ const {
   listLogs_Alarms
 } = require('../services/AlarmsService')
 const { createDbForSchema, db } = require('../models')
-const { listClients } = require('../utils/js/clients')
+const { listClients, influxByClient } = require('../utils/js/clients')
 
 const getAlarms = async (req, res) => {
   try {
@@ -81,14 +81,23 @@ const checkAlarms = async (req, res) => {
 
 const publicCheckAlarms = async (req, res) => {
   try {
-    const { schemaName, influx_name } = req.query
-    if (!influx_name) return res.status(400).json({ error: 'Falta influx_name' })
+    const { schemaName } = req.query
 
     let schemasToCheck = schemaName ? [schemaName] : listClients.map(client => `masagua_${client}`)
 
     const results = []
+
     for (const schema of schemasToCheck) {
       try {
+        const clientKey = schema.replace('masagua_', '')
+        const influx_name = influxByClient[clientKey] 
+
+        if (!influx_name) {
+          console.log(`No se encontró influx_name para el cliente ${clientKey}`)
+          results.push({ schema, error: 'No se encontró influx_name para este cliente' })
+          continue
+        }
+
         const localDb = createDbForSchema(schema)
         const user = { influx_name, db: localDb }
         const result = await alarmsChecked(user)
