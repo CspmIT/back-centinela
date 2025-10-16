@@ -6,19 +6,18 @@ const listAlarms = async () => {
 	try {
 		const alarms = await db.Alarms.findAll({
 			include: [
-				{
-					model: db.InfluxVar,
-					as: 'variable',
-					attributes: ['id', 'name'],
-				},
+			  { model: db.InfluxVar, as: 'variable', attributes: ['id', 'name'] },
+			  { model: db.InfluxVar, as: 'secondaryVariable', attributes: ['id', 'name'] },
 			],
-		})
-
+			order: [['id', 'ASC']],
+		  })
+		  
 		return alarms.map((a) => {
 			const json = a.toJSON()
 			return {
 				...json,
 				var_name: json.variable?.name || null,
+				secondaryVarName: json.secondaryVariable?.name || '',
 			}
 		})
 	} catch (error) {
@@ -71,85 +70,120 @@ const changeStatusAlarm = async (id, status) => {
 
 const alarmsChecked = async (user) => {
 	try {
-		const db = user.db
-		const alarms = await db.Alarms.findAll({
-			where: { status: true },
-			include: [{ model: db.InfluxVar, as: 'variable' }],
-			raw: true,
-			nest: true,
-		});
-		console.log(!alarms.length ? `No hay alarmas activas en la db: ${db.sequelize.config.database}` : `Se encontraron ${alarms.length} alarmas activas en la db: ${db.sequelize.config.database}`);
-		const results = []
-
-		for (const alarm of alarms) {
-			const influxVar = alarm.variable;
-			if (!influxVar) {
-				console.log(`La alarma "${alarm.name}" no tiene variable vinculada`);
-				continue;
-			}
-
-			let currentValue;
-			// Tipo history
-			if (influxVar.type === 'history') {
-				const historyData = await getHistorcalInfluxData(influxVar, user);
-				if (!Array.isArray(historyData) || historyData.length === 0) {
-					console.log(`Sin datos históricos para ${alarm.name}`);
-					continue;
-				}
-				const lastPoint = historyData.at(-1); // último valor
-				currentValue = parseFloat(lastPoint?._value);
-			}
-
-			// Tipo simple
-			else {
-				const simpleData = await getSimpleInfluxData(influxVar, user);
-				if (!simpleData || Object.keys(simpleData).length === 0) {
-					console.log(`No se obtuvo el dato para ${alarm.name}`);
-					continue;
-				}
-				const firstKey = Object.keys(simpleData)[0];
-				currentValue = parseFloat(simpleData[firstKey]?.value);
-				console.log(`Variable: "${alarm.name}", Último valor:`, currentValue);
-			}
-
-			if (isNaN(currentValue)) continue;
-
-			// Evaluar condición
-			let triggered = false;
-			switch (alarm.condition) {
-				case '>': triggered = currentValue > alarm.value; break;
-				case '<': triggered = currentValue < alarm.value; break;
-				case '=': triggered = currentValue === alarm.value; break;
-				case '>=': triggered = currentValue >= alarm.value; break;
-				case '<=': triggered = currentValue <= alarm.value; break;
-				case 'entre': triggered = currentValue >= alarm.value && currentValue <= alarm.value2; break;
-			}
-
-			if (triggered) {
-				await createAlarmLog(db, alarm, currentValue);
-				const msg = `Alarma "${alarm.name}" disparada`;
-				console.log(msg);
-				results.push({ alarm: alarm.name, status: 'triggered', value: currentValue, message: msg });
-			} else {
-				const msg = `Alarma "${alarm.name}" no disparada`;
-				results.push({ alarm: alarm.name, status: 'ok', value: currentValue, message: msg });
-			}
+	  const db = user.db
+	  const alarms = await db.Alarms.findAll({
+		where: { status: true },
+		include: [
+		  { model: db.InfluxVar, as: 'variable' },
+		  { model: db.InfluxVar, as: 'secondaryVariable' }
+		],
+		raw: true,
+		nest: true,
+	  })
+  
+	  console.log(
+		!alarms.length
+		  ? `No hay alarmas activas en la db: ${db.sequelize.config.database}`
+		  : `Se encontraron ${alarms.length} alarmas activas en la db: ${db.sequelize.config.database}`
+	  )
+  
+	  const results = []
+  
+	  for (const alarm of alarms) {
+		// FUNCION AUXILIAR PARA LEER VALORES
+		const getValueForVar = async (influxVar) => {
+		  if (!influxVar) return null
+  
+		  if (influxVar.type === 'history') {
+			const historyData = await getHistorcalInfluxData(influxVar, user)
+			if (!Array.isArray(historyData) || historyData.length === 0) return null
+			const lastPoint = historyData.at(-1)
+			return parseFloat(lastPoint?._value)
+		  } else {
+			const simpleData = await getSimpleInfluxData(influxVar, user)
+			if (!simpleData || Object.keys(simpleData).length === 0) return null
+			const firstKey = Object.keys(simpleData)[0]
+			return parseFloat(simpleData[firstKey]?.value)
+		  }
 		}
-
-		// Si ninguna se disparó
-		const triggeredCount = results.filter(r => r.status === 'triggered').length;
-		if (triggeredCount === 0) {
-			console.log('No se disparó ninguna alarma');
-			return { message: 'No se disparó ninguna alarma', results };
+  
+		// LEER VALOR VARIABLE PRINCIPAL
+		const primaryValue = await getValueForVar(alarm.variable)
+		if (isNaN(primaryValue)) continue
+  
+		// EVALUAR CONDICIÓN PRINCIPAL
+		const evaluateCondition = (val, cond, val1, val2) => {
+		  switch (cond) {
+			case '>': return val > val1
+			case '<': return val < val1
+			case '=': return val === val1
+			case '>=': return val >= val1
+			case '<=': return val <= val1
+			case 'entre': return val >= val1 && val <= val2
+			default: return false
+		  }
 		}
-
-		return { message: `${triggeredCount} alarma(s) disparada(s)`, results };
-
+  
+		let triggered = false
+  
+		// SI ES UNA ALARMA SIMPLE
+		if (alarm.type === 'single') {
+		  triggered = evaluateCondition(primaryValue, alarm.condition, alarm.value, alarm.value2)
+		}
+  
+		// SI ES UNA ALARMA COMBINADA
+		else if (alarm.type === 'combined') {
+		  const secondaryValue = await getValueForVar(alarm.secondaryVariable)
+		  if (isNaN(secondaryValue)) {
+			console.log(`La alarma combinada "${alarm.name}" no tiene valor secundario válido`)
+			continue
+		  }
+  
+		  const primaryTriggered = evaluateCondition(primaryValue, alarm.condition, alarm.value, alarm.value2)
+		  const secondaryTriggered = evaluateCondition(
+			secondaryValue,
+			alarm.secondaryCondition,
+			alarm.secondaryValue,
+			null
+		  )
+  
+		  if (alarm.logicOperator === 'AND') {
+			triggered = primaryTriggered && secondaryTriggered
+		  } else if (alarm.logicOperator === 'OR') {
+			triggered = primaryTriggered || secondaryTriggered
+		  }
+  
+		  console.log(
+			`Evaluando combinada "${alarm.name}": ${alarm.variable.name}=${primaryValue} ${alarm.condition} ${alarm.value} ${alarm.logicOperator} ${alarm.secondaryVariable.name}=${secondaryValue} ${alarm.secondaryCondition} ${alarm.secondaryValue}`
+		  )
+		}
+  
+		// DISPARO		
+		if (triggered) {
+		  await createAlarmLog(db, alarm, primaryValue)
+		  const msg = `🚨 Alarma "${alarm.name}" disparada`
+		  console.log(msg)
+		  results.push({ alarm: alarm.name, status: 'triggered', value: primaryValue, message: msg })
+		} else {
+		  const msg = `✅ Alarma "${alarm.name}" no disparada`
+		  results.push({ alarm: alarm.name, status: 'ok', value: primaryValue, message: msg })
+		}
+	  }
+  
+	  const triggeredCount = results.filter(r => r.status === 'triggered').length
+	  if (triggeredCount === 0) {
+		console.log('No se disparó ninguna alarma')
+		return { message: 'No se disparó ninguna alarma', results }
+	  }
+  
+	  return { message: `${triggeredCount} alarma(s) disparada(s)`, results }
+  
 	} catch (err) {
-		console.error('Error en checkAlarms:', err);
-		throw err;
+	  console.error('Error en checkAlarms:', err)
+	  throw err
 	}
-};
+  }
+  
 
 const listLogs_Alarms = async () => {
 	try {
