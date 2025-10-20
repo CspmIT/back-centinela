@@ -214,6 +214,22 @@ const listLogs_Alarms = async () => {
 	  throw error
 	}
   }
+
+  const changeViewedAlarm = async (id) => {
+	console.log('changeViewedAlarm called with id:', id);
+	if (id) {
+	  const alert = await db.Logs_Alarms.findByPk(id);
+	  if (!alert) throw new Error('Alerta no encontrada');
+	  await alert.update({ viewed: true });
+	  return alert;
+	} else {
+	  const [updatedCount] = await db.Logs_Alarms.update(
+		{ viewed: true },
+		{ where: { viewed: false } } 
+	  );
+	  return { updatedCount }; 
+	}
+  };
   
 
 module.exports = {
@@ -222,5 +238,6 @@ module.exports = {
 	updateAlarm,
 	changeStatusAlarm,
 	alarmsChecked,
-	listLogs_Alarms
+	listLogs_Alarms,
+	changeViewedAlarm
 }

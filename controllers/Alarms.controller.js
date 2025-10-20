@@ -4,7 +4,8 @@ const {
   updateAlarm,
   changeStatusAlarm,
   alarmsChecked,
-  listLogs_Alarms
+  listLogs_Alarms,
+  changeViewedAlarm
 } = require('../services/AlarmsService')
 const { createDbForSchema, db } = require('../models')
 const { listClients, influxByClient } = require('../utils/js/clients')
@@ -132,11 +133,15 @@ const getLog_Alarms = async (req, res) => {
 
 const markAlertAsViewed = async (req, res) => {
   try {
-    await db.Logs_Alarms.update({ viewed: true }, { where: { id: req.params.id } })
-    return res.json({ message: 'Alerta marcada como leida' })
+    const { id } = req.params
+    const updatedAlarm = await changeViewedAlarm(id)
+    return res.status(200).json(updatedAlarm)
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Error al marcar alerta' })
+    if (error.errors) {
+      res.status(500).json(error.errors)
+    } else {
+      res.status(400).json(error.message)
+    }
   }
 }
 

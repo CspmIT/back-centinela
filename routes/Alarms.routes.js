@@ -19,6 +19,7 @@ router.put('/changeStatusAlarm', verifyToken, toggleAlarmStatus)
 router.get('/checkAlarms', verifyToken, checkAlarms)
 
 router.get('/listAlerts', verifyToken, getLog_Alarms)
+router.put('/alerts/allviewed/', verifyToken, markAlertAsViewed)
 router.put('/alerts/viewed/:id', verifyToken, markAlertAsViewed)
 router.get('/alerts/unread-count', verifyToken, getUnreadAlertCount)
 
