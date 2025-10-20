@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
 			position_var: DataTypes.STRING,
 			max_value_var: DataTypes.FLOAT,
 			status: DataTypes.BOOLEAN,
+			boolean_colors: DataTypes.JSON,
 		},
 		{
 			sequelize,
