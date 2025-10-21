@@ -70,7 +70,7 @@ const saveDiagram = async (req, res) => {
             show_var: image.variables[nameVar].show,
             position_var: image.variables[nameVar].position,
             max_value_var: image.variables[nameVar].max_value,
-            boolean_colors: image.variables[nameVar].booleanColors || null,
+            boolean_colors: image.variables[nameVar].boolean_colors || null,
             status: true,
           }));
 
