@@ -4,6 +4,8 @@ const listClients = [
     'cespal', 
     'coopmorteros', 
     'san_genaro',
+    'adeco',
+    'lactear',
     // 'desarrollo'
   ]
   
@@ -13,6 +15,8 @@ const listClients = [
     cespal: 'Sensors_ExternosPublic',
     coopmorteros: 'Sensors_Morteros',
     san_genaro: 'Sensors_ExternosPublic',
+    adeco: 'Sensors_ExternosPublic',
+    lactear: 'Sensors_ExternosPublic',
     // desarrollo: 'Sensors_ExternosPublic',
   }
   
