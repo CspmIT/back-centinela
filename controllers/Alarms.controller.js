@@ -110,7 +110,7 @@ const publicCheckAlarms = async (req, res) => {
       }
     }
 
-    return res.json({ results })
+    return res.json({ message, results })
   } catch (err) {
     console.error('Error general en publicCheckAlarms:', err)
     return res.status(500).json({ error: err.message })
