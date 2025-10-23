@@ -34,6 +34,7 @@ async function getSimpleInfluxData(influxVar, user) {
 
     const dataInflux = await ConsultaInflux(query, influx_name)
     const formattedData = await fomratInfluxData(dataInflux)
+    console.log('getSimpleInfluxDatas', formattedData)
     return formattedData
 }
 async function getMultipleHistoricalInfluxData(queryObject, user) {
