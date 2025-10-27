@@ -6,8 +6,8 @@ const { db } = require('../models')
 
 const waterAverageTax = async (req, res) => {
     try {
-        const { influx_name } = req.user
-        const user = { influx_name, db }
+        const { influx_name, name_coop } = req.user
+        const user = { influx_name, db, name_coop }
        
         const data = await getWaterAverageTax(user)
         return res.status(200).json(data)
@@ -19,8 +19,8 @@ const waterAverageTax = async (req, res) => {
 
 const getGrafDifMenOsmosis = async (req, res) => {
     try {
-        const { influx_name } = req.user
-        const user = { influx_name, db }
+        const { influx_name, name_coop } = req.user
+        const user = { influx_name, db, name_coop }
        
         const data = await graf_dif_men_osmosis(user)
         return res.status(200).json(data)
