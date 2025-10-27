@@ -11,21 +11,44 @@ const formatDDMMYYYY = d => `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.
 
 const formatConsumption = (n) => {
     if (Number.isFinite(n)) {
-        if (Math.abs(Math.round(n) - n) < 1e-9) return String(Math.round(n)) // entero
+        if (Math.abs(Math.round(n) - n) < 1e-9) return String(Math.round(n))
         return Number(n).toFixed(2)
     }
     return '0'
 }
 
+function getTopicByClient(clientName) {
+    const topics = {
+        masagua_adeco: 'coop/agua/Clientes/AdecoAgro/fosa_entrada/channels',
+        masagua_lactear: 'coop/agua/Clientes/Lactear/fosa_entrada/status',
+        //masagua_desarrollo: 'coop/agua/Clientes/Lactear/fosa_entrada/status'
+    }
+    const fields = {
+        masagua_adeco: 'Totalizado',
+        masagua_lactear: 'total_1',
+        //masagua_desarrollo: 'total_1'
+    }
+
+    return {
+        topic: topics[clientName] || null,
+        field: fields[clientName] || null
+    }
+
+}
+
 async function getWaterAverageTax(user) {
     try {
-        const fluxQueryTail = `
-      |> range(start: -2mo, stop: now())
-      |> filter(fn: (r) => r["topic"] == "coop/agua/Clientes/AdecoAgro/fosa_entrada/channels")
-      |> filter(fn: (r) => r["_field"] == "Totalizado")
-      |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
-    `
-        const total = await ConsultaInflux(fluxQueryTail, user.influx_name)
+        const { topic, field } = getTopicByClient(user.name_coop)
+
+        if (!topic || !field) throw new Error('Cliente no reconocido')
+
+        const fluxQuery = `
+          |> range(start: -2mo, stop: now())
+          |> filter(fn: (r) => r["topic"] == "${topic}")
+          |> filter(fn: (r) => r["_field"] == "${field}")
+          |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
+        `
+        const total = await ConsultaInflux(fluxQuery, user.influx_name)
 
         if (!Array.isArray(total) || total.length === 0) {
             throw new Error('Sin datos')
@@ -67,12 +90,13 @@ async function getWaterAverageTax(user) {
 
         const mesAnt = meses[dtMinus1.getMonth()]
         const mesActual = meses[now.getMonth()]
-        const diasAnt = String(lastDayOfMonth(dtMinus2.getFullYear(), dtMinus2.getMonth()))
+        const diasAnt1 = String(lastDayOfMonth(dtMinus1.getFullYear(), dtMinus1.getMonth()))
+        const diasAnt2 = String(lastDayOfMonth(dtMinus2.getFullYear(), dtMinus2.getMonth()))
         const diasProx = String(now.getDate())
         // Cálculos
         const consumoActualCalc = consumo_actual - consumo_anterior
         const consumoProxCalc = consumo_prog - consumo_actual
-        const estimado = ((consumoProxCalc * Number(diasAnt)) / Number(diasProx))
+        const estimado = ((consumoProxCalc * Number(diasAnt2)) / Number(diasProx))
 
         // Resultado con mismo formato que PHP
         const result = {
@@ -82,7 +106,7 @@ async function getWaterAverageTax(user) {
                 fecha_act,
                 valor_act: `${Number(consumo_actual).toFixed(2)} m³`,
                 consumo: `${formatConsumption(consumoActualCalc)} m³`,
-                dias: diasAnt,
+                dias: diasAnt1,
                 periodo: mesAnt
             },
             prox: {
@@ -104,55 +128,57 @@ async function getWaterAverageTax(user) {
 
 async function graf_dif_men_osmosis(user) {
     try {
-      // Consulta similar a la de PHP, pero 13 meses atrás
-      const fluxQuery = `
-        |> range(start: -13mo, stop: now())
-        |> filter(fn: (r) => r["topic"] == "coop/agua/Clientes/AdecoAgro/fosa_entrada/channels")
-        |> filter(fn: (r) => r["_field"] == "Totalizado")
-        |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
-      `
-  
-      const total = await ConsultaInflux(fluxQuery, user.influx_name)
-  
-      if (!Array.isArray(total) || total.length === 0) {
-        throw new Error('Sin datos')
-      }
-  
-      const data = []
-      const minDate = new Date('2023-10-01')
-  
-      for (let i = 0; i < total.length; i++) {
-        const rec = total[i]
-        if (!rec._time || rec._value == null) continue
-  
-        const recDate = new Date(rec._time)
-        if (recDate <= minDate) continue 
-  
-        const mes = meses[recDate.getMonth()]
-        const anio = recDate.getFullYear()
-        let valor
-  
-        if (i === 0) {
-          valor = rec._value
-        } else {
-          const prev = total[i - 1]
-          valor = rec._value - prev._value
-        }
-  
-        data.push([`${mes}-${anio}`, valor])
-      }
-  
-      if (data.length > 0) data.shift()
-  
-      return data
-  
-    } catch (error) {
-      console.error('Error en graf_dif_men_osmosis:', error)
-      throw error
-    }
-  }
+        const { topic, field } = getTopicByClient(user.name_coop)
+        if (!topic || !field) throw new Error('Cliente no reconocido')
 
-module.exports = { 
+        const fluxQuery = `
+          |> range(start: -13mo, stop: now())
+          |> filter(fn: (r) => r["topic"] == "${topic}")
+          |> filter(fn: (r) => r["_field"] == "${field}")
+          |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
+        `
+
+        const total = await ConsultaInflux(fluxQuery, user.influx_name)
+
+        if (!Array.isArray(total) || total.length === 0) {
+            throw new Error('Sin datos')
+        }
+
+        const data = []
+        const minDate = new Date('2023-10-01')
+
+        for (let i = 0; i < total.length; i++) {
+            const rec = total[i]
+            if (!rec._time || rec._value == null) continue
+
+            const recDate = new Date(rec._time)
+            if (recDate <= minDate) continue
+
+            const mes = meses[recDate.getMonth()]
+            const anio = recDate.getFullYear()
+            let valor
+
+            if (i === 0) {
+                valor = rec._value
+            } else {
+                const prev = total[i - 1]
+                valor = rec._value - prev._value
+            }
+
+            data.push([`${mes}-${anio}`, valor])
+        }
+
+        if (data.length > 0) data.shift()
+
+        return data
+
+    } catch (error) {
+        console.error('Error en graf_dif_men_osmosis:', error)
+        throw error
+    }
+}
+
+module.exports = {
     getWaterAverageTax,
     graf_dif_men_osmosis
 }
