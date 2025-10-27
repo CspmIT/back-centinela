@@ -22,7 +22,6 @@ async function InfluxConection(req, res) {
     }
 }
 async function getSimpleInfluxData(influxVar, user) {
-    
     if (influxVar?.type) {
         influxVar = influxVar.varsInflux
     }
@@ -32,10 +31,17 @@ async function getSimpleInfluxData(influxVar, user) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
     }
 
+    //AGREGAR LOGICA SEGUN SI LA VARIABLE ES CALCULADA O NO
+    //Si es calculada, hacer una consulta por cada variable que la compone y luego calcular el valor con la ecuacion que viene desde el back
+
+    //si no es calculada, hacer consulta normal y devolver el valor que viene directo desde influx
     const dataInflux = await ConsultaInflux(query, influx_name)
+
+
     const formattedData = await fomratInfluxData(dataInflux)
     return formattedData
 }
+
 async function getMultipleHistoricalInfluxData(queryObject, user) {
     if (!user?.influx_name) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
