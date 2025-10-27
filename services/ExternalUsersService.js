@@ -17,6 +17,14 @@ const formatConsumption = (n) => {
     return '0'
 }
 
+const toLocalDate = (utcDate) => {
+    const d = new Date(utcDate)
+    // Ajuste manual UTC → UTC−3
+    d.setHours(d.getHours() - 3)
+    return d
+  }
+  
+
 function getTopicByClient(clientName) {
     const topics = {
         masagua_adeco: 'coop/agua/Clientes/AdecoAgro/fosa_entrada/channels',
@@ -87,7 +95,7 @@ async function getWaterAverageTax(user) {
       // Recorrer resultados y detectar valores por mes
       for (const rec of total) {
         if (!rec._time) continue
-        const recDate = new Date(rec._time)
+        const recDate = toLocalDate(rec._time)
         const recYM = `${recDate.getFullYear()}-${pad2(recDate.getMonth() + 1)}`
         const val = Number(rec._value)
         console.log(`🧩 [Dato] ${recYM} = ${val}`)
