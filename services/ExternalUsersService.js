@@ -45,13 +45,8 @@ function getTopicByClient(clientName) {
 }
 
 async function getWaterAverageTax(user) {
-    try {
-      console.log('🟢 [getWaterAverageTax] Iniciando cálculo para:', user.name_coop)
-  
+    try {  
       const { topic, field } = getTopicByClient(user.name_coop)
-      console.log('🔹 Topic:', topic)
-      console.log('🔹 Field:', field)
-  
       if (!topic || !field) throw new Error('Cliente no reconocido')
   
       const fluxQuery = `
@@ -60,15 +55,7 @@ async function getWaterAverageTax(user) {
         |> filter(fn: (r) => r["_field"] == "${field}")
         |> aggregateWindow(every: 1mo, fn: last, createEmpty: false)
       `
-      console.log('📤 [Flux Query]:', fluxQuery)
-  
       const total = await ConsultaInflux(fluxQuery, user.influx_name)
-      console.log('📥 [Influx Result] Cantidad de registros:', Array.isArray(total) ? total.length : 0)
-      if (Array.isArray(total)) {
-        total.forEach((r, i) =>
-          console.log(`   #${i} → time=${r._time}, value=${r._value}`)
-        )
-      }
   
       if (!Array.isArray(total) || total.length === 0) {
         throw new Error('Sin datos')
@@ -87,18 +74,12 @@ async function getWaterAverageTax(user) {
       const ymMinus1 = `${dtMinus1.getFullYear()}-${pad2(dtMinus1.getMonth() + 1)}`
       const ymMinus2 = `${dtMinus2.getFullYear()}-${pad2(dtMinus2.getMonth() + 1)}`
   
-      console.log('📆 [Fechas]')
-      console.log('   ymNow:', ymNow)
-      console.log('   ymMinus1:', ymMinus1)
-      console.log('   ymMinus2:', ymMinus2)
-  
       // Recorrer resultados y detectar valores por mes
       for (const rec of total) {
         if (!rec._time) continue
         const recDate = toLocalDate(rec._time)
         const recYM = `${recDate.getFullYear()}-${pad2(recDate.getMonth() + 1)}`
         const val = Number(rec._value)
-        console.log(`🧩 [Dato] ${recYM} = ${val}`)
   
         if (recYM === ymMinus2) {
           consumo_anterior = val
@@ -109,14 +90,8 @@ async function getWaterAverageTax(user) {
         }
       }
   
-      console.log('🔢 [Valores brutos]')
-      console.log('   consumo_anterior:', consumo_anterior)
-      console.log('   consumo_actual:', consumo_actual)
-      console.log('   consumo_prog:', consumo_prog)
-  
       const nowYMCheck = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`
       if (nowYMCheck === '2023-11') {
-        console.warn('⚠️ Ajuste manual: consumo_anterior = 0 para 2023-11')
         consumo_anterior = 0
       }
   
@@ -138,11 +113,6 @@ async function getWaterAverageTax(user) {
       const consumoProxCalc = consumo_prog - consumo_actual
       const estimado = ((consumoProxCalc * Number(diasAnt2)) / Number(diasProx))
   
-      console.log('📊 [Cálculos]')
-      console.log('   consumoActualCalc:', consumoActualCalc)
-      console.log('   consumoProxCalc:', consumoProxCalc)
-      console.log('   estimado:', estimado)
-  
       const result = {
         actual: {
           fecha_ant,
@@ -163,10 +133,9 @@ async function getWaterAverageTax(user) {
         },
       }
   
-      console.log('✅ [Resultado Final]', JSON.stringify(result, null, 2))
       return result
     } catch (error) {
-      console.error('❌ Error en getWaterAverageTax:', error)
+      console.error('Error en getWaterAverageTax:', error)
       throw error
     }
   }
@@ -185,6 +154,7 @@ async function graf_dif_men_osmosis(user) {
         `
 
         const total = await ConsultaInflux(fluxQuery, user.influx_name)
+        total.sort((a, b) => new Date(a._time) - new Date(b._time))
 
         if (!Array.isArray(total) || total.length === 0) {
             throw new Error('Sin datos')
@@ -197,7 +167,7 @@ async function graf_dif_men_osmosis(user) {
             const rec = total[i]
             if (!rec._time || rec._value == null) continue
 
-            const recDate = new Date(rec._time)
+            const recDate = toLocalDate(rec._time)
             if (recDate <= minDate) continue
 
             const mes = meses[recDate.getMonth()]
