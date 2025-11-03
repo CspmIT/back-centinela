@@ -29,12 +29,12 @@ function getTopicByClient(clientName) {
     const topics = {
         masagua_adeco: 'coop/agua/Clientes/AdecoAgro/fosa_entrada/channels',
         masagua_lactear: 'coop/agua/Clientes/Lactear/fosa_entrada/status',
-        masagua_desarrollo: 'coop/agua/Clientes/AdecoAgro/fosa_entrada/channels'
+        masagua_desarrollo: 'coop/agua/Clientes/Lactear/fosa_entrada/status'
     }
     const fields = {
         masagua_adeco: 'Totalizado',
         masagua_lactear: 'total_1',
-        masagua_desarrollo: 'Totalizado'
+        masagua_desarrollo: 'total_1'
     }
 
     return {
@@ -181,8 +181,8 @@ async function graf_dif_men_osmosis(user) {
                 valor = rec._value - prev._value
             }
 
-            data.push([`${mes}-${anio}`, valor])
-        }
+            data.push([`${mes}-${anio}`, Number(valor.toFixed(2))])
+          }
 
         if (data.length > 0) data.shift()
 
