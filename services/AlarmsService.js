@@ -93,7 +93,7 @@ const alarmsChecked = async (user) => {
 			// FUNCION AUXILIAR PARA LEER VALORES
 			const getValueForVar = async (influxVar) => {
 				if (!influxVar) return null
-
+			
 				if (influxVar.type === 'history') {
 					const historyData = await getHistorcalInfluxData(influxVar, user)
 					if (!Array.isArray(historyData) || historyData.length === 0) return null
@@ -102,18 +102,22 @@ const alarmsChecked = async (user) => {
 				} else {
 					const simpleData = await getSimpleInfluxData(influxVar, user)
 					if (!simpleData || Object.keys(simpleData).length === 0) return null
-					const firstKey = Object.keys(simpleData)[0]
-					return parseFloat(simpleData[firstKey]?.value)
+			
+					if (typeof simpleData.value !== 'undefined') {
+						return parseFloat(simpleData.value)
+					} else {
+						const firstKey = Object.keys(simpleData)[0]
+						return parseFloat(simpleData[firstKey]?.value)
+					}
 				}
-			}
-
+			}			
+			
 			// LEER VALOR VARIABLE PRINCIPAL
 			const primaryValue = await getValueForVar(alarm.variable)
 			if (primaryValue === null || isNaN(primaryValue)) {
 				console.log(`La alarma "${alarm.name}" tiene valor nulo o inválido ${alarm.variable.name}: (${primaryValue})`)
 				continue
 			}
-
 
 			// EVALUAR CONDICIÓN PRINCIPAL
 			const evaluateCondition = (val, cond, val1, val2) => {

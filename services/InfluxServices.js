@@ -5,6 +5,7 @@ const axios = require('axios')
 const config_influx = require(__dirname + '/../config/config_influx.js')
 
 const ConsultaInflux = async (query, influxName) => {
+    
     try {
         const {
             INFLUX_URL: url,
