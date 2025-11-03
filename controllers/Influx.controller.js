@@ -21,25 +21,60 @@ async function InfluxConection(req, res) {
         }
     }
 }
+
 async function getSimpleInfluxData(influxVar, user) {
-    if (influxVar?.type) {
-        influxVar = influxVar.varsInflux
-    }
-    const query = await generateQuery(Object.values(influxVar).shift())
     const { influx_name = false } = user
-    if (!influx_name) {
-        throw new Error('Tenes que estar logeado para hacer esta consulta')
+    if (!influx_name) throw new Error('Tenes que estar logeado para hacer esta consulta')
+        
+    // Si la variable es calculada
+    if (influxVar?.calc) {
+        // Consultar cada subvariable definida en varsInflux
+        const results = await Promise.all(
+            Object.entries(influxVar.varsInflux).map(async ([varName, varConfig]) => {
+                const query = await generateQuery(varConfig)
+                const data = await ConsultaInflux(query, influx_name)
+                // Buscar el valor según calc_field
+                const valueRow = Array.isArray(data)
+                    ? data.find((row) => row._field === varConfig.calc_field)
+                    : null
+
+                return { varName, value: valueRow ? valueRow._value : 0 }
+            })
+        )
+
+        // Crear un diccionario { varName: value }
+        const valuesMap = results.reduce((acc, { varName, value }) => {
+            acc[varName] = value
+            return acc
+        }, {})
+        // Reemplazar las variables en la ecuación
+        let evaluableExpression = influxVar.equation
+            .map((part) => {
+                const match = part.match(/^{{(.+?)}}$/)
+                return match ? valuesMap[match[1]] ?? 0 : part
+            })
+            .join(' ')
+
+        // Evitar números pegados sin operador
+        evaluableExpression = evaluableExpression.replace(/(\d)\s+(\d)/g, '$1$2')
+        // Evaluar la ecuación con seguridad
+        try {
+            const { Parser } = require('expr-eval')
+            const parser = new Parser()
+            const value = parser.evaluate(evaluableExpression)
+            return { value }
+        } catch (err) {
+            console.error('Expresion invalida en variable calculada:', err.message)
+            return { value: null }
+        }
+    } 
+    else {
+        // Variable NO calculada → flujo original
+        const query = await generateQuery(Object.values(influxVar.varsInflux).shift())
+        const dataInflux = await ConsultaInflux(query, influx_name)
+        const formattedData = await fomratInfluxData(dataInflux)
+        return formattedData
     }
-
-    //AGREGAR LOGICA SEGUN SI LA VARIABLE ES CALCULADA O NO
-    //Si es calculada, hacer una consulta por cada variable que la compone y luego calcular el valor con la ecuacion que viene desde el back
-
-    //si no es calculada, hacer consulta normal y devolver el valor que viene directo desde influx
-    const dataInflux = await ConsultaInflux(query, influx_name)
-
-
-    const formattedData = await fomratInfluxData(dataInflux)
-    return formattedData
 }
 
 async function getMultipleHistoricalInfluxData(queryObject, user) {
@@ -130,26 +165,36 @@ async function InfluxChart(req, res) {
     }
 }
 
-//funcion para consultar multiples variables y obtener un dato de influx
+//funcion para consultar multiples variables y obtener un objeto con el valor de cada una
 async function getMultipleSimpleValues(req, res) {
     try {
         const { user = false } = req
         if (!user?.influx_name) throw new Error('Tenes que estar logeado')
 
-        const influxVars = req.body
+        const dataInflux = req.body
         const results = {}
 
-        for (const item of influxVars) {
-            const influxVar = item.varsInflux
-            const query = await generateQuery(influxVar) // genera `|> last()`
-            const data = await ConsultaInflux(query, user.influx_name)
+        for (const item of dataInflux) {
+            const influxVar = item.dataInflux
+            const valueInflux = await getSimpleInfluxData(influxVar, user)
 
-            // Buscar el primer valor que coincida con el campo
-            const valueRow = Array.isArray(data)
-                ? data.find((row) => row._field === influxVar.calc_field)
-                : null
+            let value;
 
-            results[item.id] = valueRow ? valueRow._value : null
+            // variable calculada
+            if (valueInflux && typeof valueInflux.value !== 'undefined') {
+                value = valueInflux.value
+            }
+            // Caso 2: variable simple
+            else if (valueInflux && typeof valueInflux === 'object') {
+                // Tomamos el primer valor del objeto interno
+                const first = Object.values(valueInflux)[0]
+                value = first?.value ?? 0
+            }
+            else {
+                value = 0
+            }
+
+            results[influxVar.id] = value
         }
 
         return res.status(200).json(results)
@@ -158,6 +203,8 @@ async function getMultipleSimpleValues(req, res) {
         res.status(500).json({ error: error.message })
     }
 }
+
+
 
 module.exports = {
     InfluxConection,

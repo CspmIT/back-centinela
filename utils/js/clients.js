@@ -6,7 +6,7 @@ const listClients = [
     'san_genaro',
     'adeco',
     'lactear',
-    //'desarrollo'
+    // 'desarrollo'
   ]
   
   // Mapeo hardcodeado de cada cliente a su influx_name correspondiente
