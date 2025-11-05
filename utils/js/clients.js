@@ -6,6 +6,7 @@ const listClients = [
     'san_genaro',
     'adeco',
     'lactear',
+    'muni_morteros',
     // 'desarrollo'
   ]
   
@@ -17,6 +18,7 @@ const listClients = [
     san_genaro: 'Sensors_ExternosPublic',
     adeco: 'Sensors_Morteros',
     lactear: 'Sensors_Morteros',
+    muni_morteros: 'Sensors_ExternosPublic',
     // desarrollo: 'Sensors_ExternosPublic',
   }
   
