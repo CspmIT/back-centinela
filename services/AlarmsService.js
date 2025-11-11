@@ -93,7 +93,7 @@ const alarmsChecked = async (user) => {
 			// FUNCION AUXILIAR PARA LEER VALORES
 			const getValueForVar = async (influxVar) => {
 				if (!influxVar) return null
-			
+
 				if (influxVar.type === 'history') {
 					const historyData = await getHistorcalInfluxData(influxVar, user)
 					if (!Array.isArray(historyData) || historyData.length === 0) return null
@@ -102,7 +102,7 @@ const alarmsChecked = async (user) => {
 				} else {
 					const simpleData = await getSimpleInfluxData(influxVar, user)
 					if (!simpleData || Object.keys(simpleData).length === 0) return null
-			
+
 					if (typeof simpleData.value !== 'undefined') {
 						return parseFloat(simpleData.value)
 					} else {
@@ -110,8 +110,8 @@ const alarmsChecked = async (user) => {
 						return parseFloat(simpleData[firstKey]?.value)
 					}
 				}
-			}			
-			
+			}
+
 			// LEER VALOR VARIABLE PRINCIPAL
 			const primaryValue = await getValueForVar(alarm.variable)
 			if (primaryValue === null || isNaN(primaryValue)) {
@@ -166,63 +166,60 @@ const alarmsChecked = async (user) => {
 				)
 			}
 
-			// RESULTADO Y LOG
-			const status = triggered ? 'triggered' : 'ok';
+			const status = triggered ? 'triggered' : 'ok'
 			const msg = triggered
 				? `🚨 Alarma "${alarm.name}" disparada`
-				: `✅ Alarma "${alarm.name}" no disparada`;
-			if (triggered) await createAlarmLog(db, alarm, primaryValue, secondaryValue);
+				: `✅ Alarma "${alarm.name}" no disparada`
 
-			// ESTRUCTURA DE RESPUESTA ADAPTADA
-			const alarmResponse = {
+			if (triggered) await createAlarmLog(db, alarm, primaryValue, secondaryValue)
+
+			results.push({
 				name: alarm.name,
 				type: alarm.type,
 				status,
 				variables:
 					alarm.type === 'single'
-						? [
-							{
-								name: alarm.variable?.name,
-								value: primaryValue,
-							}
-						]
+						? [{ name: alarm.variable?.name, value: primaryValue }]
 						: [
-							{
-								name: alarm.variable?.name,
-								value: primaryValue,
-							},
-							{
-								name: alarm.secondaryVariable?.name,
-								value: secondaryValue,
-							}
+							{ name: alarm.variable?.name, value: primaryValue },
+							{ name: alarm.secondaryVariable?.name, value: secondaryValue },
 						],
 				message: msg,
-			};
-
-			results.push(alarmResponse);
+			})
 		}
 
-		const triggeredCount = results.filter(r => r.status === 'triggered').length;
+		const triggeredCount = results.filter(r => r.status === 'triggered').length
+		const logMessage =
+			triggeredCount === 0
+				? 'No se disparó ninguna alarma'
+				: `${triggeredCount} alarma(s) disparada(s)`
 
-		if (triggeredCount === 0) {
-			console.log('No se disparó ninguna alarma');
-			return {
-				message: 'No se disparó ninguna alarma',
+		await db.Logs_Cronjob.create({
+			message: {
+				message: logMessage,
 				results,
-			};
-		}
+			},
+		})
 
 		return {
-			message: `${triggeredCount} alarma(s) disparada(s)`,
+			message: logMessage,
 			results,
-		};
+		}
 
 	} catch (err) {
-		console.error('Error en checkAlarms:', err);
-		throw err;
+		console.error('Error en checkAlarms:', err)
+		if (user?.db?.Logs_Cronjob) {
+			await user.db.Logs_Cronjob.create({
+				message: {
+					error: err.message,
+					stack: err.stack,
+					timestamp: new Date().toISOString(),
+				},
+			})
+		}
+		throw err
 	}
-};
-
+}
 
 const listLogs_Alarms = async () => {
 	try {
