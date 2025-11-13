@@ -61,9 +61,14 @@ const formatInfluxSeriesArray = (influxSeries) => {
     const series = new Array(influxSeries.length - 1)
     for (let i = 0; i < influxSeries.length - 1; i++) {
         const element = influxSeries[i]
+
+        const value = typeof element._value === 'number'
+            ? parseFloat(element._value.toFixed(2))
+            : element._value
+
         series[i] = {
             field: element._field,
-            value: element._value,
+            value,
             time: formatter.format(new Date(element._time)), // Reemplazo de format()
             topic: element.topic,
         }
