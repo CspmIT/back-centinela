@@ -79,13 +79,15 @@ async function getSimpleInfluxData(influxVar, user) {
 
 // SE USA PARA OBTENER MULTIPLES VALORES EN UNA SOLA CONSULTA (PARA GRAFICOS LINEALES)
 async function getMultipleHistoricalInfluxData(queryObject, user) {
-    if (!user?.influx_name) throw new Error('Tenes que estar logeado para hacer esta consulta')
+    if (!user?.influx_name)
+        throw new Error('Tenes que estar logeado para hacer esta consulta')
 
     const influxName = user.influx_name
 
     const topics = [...new Set(queryObject.map(q => q.topic))]
     const fields = [...new Set(queryObject.map(q => q.field))]
 
+    // 🔹 Armar batchQuery (una sola llamada a Influx)
     const batchQuery = `
         |> range(start: ${queryObject[0].dateRange}, stop: now())
         |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
@@ -101,10 +103,10 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         const key = `${row.topic}::${row._field}`
         if (!grouped[key]) grouped[key] = []
         grouped[key].push({
-            time: row._time,
-            value: row._value,
+            _time: row._time,   
+            _value: row._value,
             topic: row.topic,
-            field: row._field,
+            _field: row._field,
         })
     }
 
@@ -116,22 +118,18 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         const key = `${influxVar.topic}::${influxVar.field}`
         const serie = grouped[key] || []
 
-        // Si no es calculada → devolver como viene
+        // Si no es calculada
         if (!influxVar.calc) {
-            formattedData[influxVar.varId] = serie.map(d => ({
-                field: d.field,
-                value: d.value,
-                time: d.time,
-                topic: d.topic,
-            }))
+            formattedData[influxVar.varId] = formatInfluxSeriesArray(serie)
             continue
         }
-        // Si es calculada → aplicamos la ecuación
-        const calcSeries = serie.map(point => {
+
+        // Si es calculada
+        const calcSerie = serie.map(point => {
             let expression = influxVar.equation
                 .map(part => {
                     const match = part.match(/^{{(.+?)}}$/)
-                    return match ? point.value ?? 0 : part
+                    return match ? point._value ?? 0 : part
                 })
                 .join(' ')
                 .replace(/(\d)\s+(\d)/g, '$1$2')
@@ -144,19 +142,18 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
             }
 
             return {
-                field: influxVar.field,
-                value,
-                time: new Date(point.time).toLocaleString('es-AR', { hour12: false }),
+                _field: influxVar.field,
+                _value: value,
+                _time: point._time,
                 topic: point.topic,
             }
         })
 
-        formattedData[influxVar.varId] = calcSeries
+        formattedData[influxVar.varId] = formatInfluxSeriesArray(calcSerie)
     }
 
     return formattedData
 }
-
 
 async function SeriesDataInflux(req, res) {
     try {
