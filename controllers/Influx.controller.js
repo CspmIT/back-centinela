@@ -77,44 +77,91 @@ async function getSimpleInfluxData(influxVar, user) {
     }
 }
 
+// SE USA PARA OBTENER MULTIPLES VALORES EN UNA SOLA CONSULTA (PARA GRAFICOS LINEALES)
 async function getMultipleHistoricalInfluxData(queryObject, user) {
-    if (!user?.influx_name) {
-        throw new Error('Tenes que estar logeado para hacer esta consulta')
-    }
+    if (!user?.influx_name) throw new Error('Tenes que estar logeado para hacer esta consulta')
 
-    const topics = [...new Set(queryObject.map((q) => q.topic))]
-    const fields = [...new Set(queryObject.map((q) => q.field))]
+    const influxName = user.influx_name
+
+    const topics = [...new Set(queryObject.map(q => q.topic))]
+    const fields = [...new Set(queryObject.map(q => q.field))]
 
     const batchQuery = `
         |> range(start: ${queryObject[0].dateRange}, stop: now())
-        |> filter(fn: (r) => ${topics
-            .map((t) => `r.topic == "${t}"`)
-            .join(' or ')})
-        |> filter(fn: (r) => ${fields
-            .map((f) => `r._field == "${f}"`)
-            .join(' or ')})
-        |> aggregateWindow(every: ${queryObject[0].samplingPeriod}, fn: ${
-        queryObject[0].typePeriod
-    }, createEmpty: true)
-        |> yield(name: "${queryObject[0].typePeriod}")`
+        |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
+        |> filter(fn: (r) => ${fields.map(f => `r._field == "${f}"`).join(' or ')})
+        |> aggregateWindow(every: ${queryObject[0].samplingPeriod}, fn: ${queryObject[0].typePeriod}, createEmpty: true)
+        |> yield(name: "${queryObject[0].typePeriod}")
+    `
 
-    const rawData = await ConsultaInflux(batchQuery, user.influx_name)
-    // Formateamos los datos agrupándolos por `varId`
-    const formattedData = queryObject.reduce((acc, query) => {
-        acc[query.varId] = formatInfluxSeriesArray(
-            rawData.filter(
-                (d) => d.topic === query.topic && d._field === query.field
-            )
-        )
-        return acc
-    }, {})
+    const rawData = await ConsultaInflux(batchQuery, influxName)
+
+    const grouped = {}
+    for (const row of rawData) {
+        const key = `${row.topic}::${row._field}`
+        if (!grouped[key]) grouped[key] = []
+        grouped[key].push({
+            time: row._time,
+            value: row._value,
+            topic: row.topic,
+            field: row._field,
+        })
+    }
+
+    const { Parser } = require('expr-eval')
+    const parser = new Parser()
+    const formattedData = {}
+
+    for (const influxVar of queryObject) {
+        const key = `${influxVar.topic}::${influxVar.field}`
+        const serie = grouped[key] || []
+
+        // Si no es calculada → devolver como viene
+        if (!influxVar.calc) {
+            formattedData[influxVar.varId] = serie.map(d => ({
+                field: d.field,
+                value: d.value,
+                time: d.time,
+                topic: d.topic,
+            }))
+            continue
+        }
+        // Si es calculada → aplicamos la ecuación
+        const calcSeries = serie.map(point => {
+            let expression = influxVar.equation
+                .map(part => {
+                    const match = part.match(/^{{(.+?)}}$/)
+                    return match ? point.value ?? 0 : part
+                })
+                .join(' ')
+                .replace(/(\d)\s+(\d)/g, '$1$2')
+
+            let value
+            try {
+                value = parser.evaluate(expression)
+            } catch {
+                value = null
+            }
+
+            return {
+                field: influxVar.field,
+                value,
+                time: new Date(point.time).toLocaleString('es-AR', { hour12: false }),
+                topic: point.topic,
+            }
+        })
+
+        formattedData[influxVar.varId] = calcSeries
+    }
 
     return formattedData
 }
 
+
 async function SeriesDataInflux(req, res) {
     try {
         const influxVars = req.body
+        
         const { user = false } = req
         if (!user) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
