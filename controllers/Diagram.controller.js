@@ -68,8 +68,8 @@ const saveDiagram = async (req, res) => {
             id_influxvars: image.variables[nameVar].id_variable,
             name_var: nameVar,
             show_var: image.variables[nameVar].show,
-            position_var: image.variables[nameVar].position,
-            max_value_var: image.variables[nameVar].max_value,
+            position_var: image.variables[nameVar].position || null,
+            max_value_var: image.variables[nameVar].max_value || null,
             boolean_colors: image.variables[nameVar].boolean_colors || null,
             status: true,
           }));
