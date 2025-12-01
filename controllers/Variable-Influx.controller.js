@@ -3,29 +3,42 @@ const {
     getVariables,
     getVarById,
     handleStatusInfluxVar,
+    saveBitsData
 } = require('../services/VariableInfluxServices')
-const { z } = require('zod')
+
+const { db } = require('../models')
+
 const { isValidId } = require('../utils/isIntegerNumber')
 
 const saveVariable = async (req, res) => {
+    const t = await db.sequelize.transaction();
     try {
-        const { name, unit, calc, varsInflux } = req.body
-
-        if ((!name, !unit, !Boolean(calc), !varsInflux))
-            throw new Error('Faltan los datos del Diagrama')
-
-        const Variable = await saveVariableInflux(req.body)
-
-        return res.status(200).json(Variable)
+      const { name, unit, calc, varsInflux, binary_compressed, bits } = req.body;
+  
+      if ((!name, !unit, !Boolean(calc), !varsInflux))
+        throw new Error('Faltan los datos del Diagrama');
+  
+      const variableSaved = await saveVariableInflux({
+        ...req.body,
+        binary_compressed: Boolean(binary_compressed),
+      });
+  
+      if (binary_compressed === true) {
+        await saveBitsData(variableSaved.id, bits, { transaction: t });
+      }
+  
+      await t.commit();
+      return res.status(200).json(variableSaved);
     } catch (error) {
-        console.error(error)
-        if (error.errors) {
-            res.status(500).json(error.errors)
-        } else {
-            res.status(400).json(error.message)
-        }
+      await t.rollback();
+      console.error(error);
+      if (error.errors) {
+        res.status(500).json(error.errors);
+      } else {
+        res.status(400).json(error.message);
+      }
     }
-}
+  };
 
 const listVariables = async (req, res) => {
     try {

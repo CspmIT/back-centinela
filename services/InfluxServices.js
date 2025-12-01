@@ -1,4 +1,4 @@
-const { InfluxDB } = require('@influxdata/influxdb-client')
+const { InfluxDB, flux } = require('@influxdata/influxdb-client')
 const crypto = require('crypto')
 require('dotenv').config()
 const axios = require('axios')
@@ -33,7 +33,6 @@ const ConsultaInflux = async (query, influxName) => {
                 },
             })
         })
-        
         return results
         
     } catch (error) {

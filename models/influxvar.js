@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
 		 */
 		static associate(models) {
 			// define association here
+			this.hasMany(models.VarsBinaryCompressedData, {
+				foreignKey: 'id_var',
+				as: 'bits'
+			  });
 		}
 	}
 	InfluxVar.init(
@@ -20,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
 			varsInflux: DataTypes.JSON,
 			equation: DataTypes.JSON,
 			status: DataTypes.BOOLEAN,
+			binary_compressed: DataTypes.BOOLEAN,
 		},
 		{
 			sequelize,

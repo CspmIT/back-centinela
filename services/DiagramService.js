@@ -27,7 +27,7 @@ const ObjectsDiagram = async (id) => {
 						{
 						  association: 'variable',
 						  required: false,
-						  attributes: ['unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+						  attributes: ['unit', 'type', 'calc', 'varsInflux', 'equation', 'status', 'binary_compressed'],
 						},
 					  ],
 					},

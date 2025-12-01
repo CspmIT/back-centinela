@@ -39,7 +39,16 @@ module.exports = {
 				type: Sequelize.BOOLEAN,
 				defaultValue: 1,
 			},
-
+			position_var: {
+				allowNull: true,
+				type: Sequelize.STRING,
+				defaultValue: null,
+			},
+			max_value_var: {
+				allowNull: true,
+				type: Sequelize.FLOAT,
+				defaultValue: null,
+			},
 			status: {
 				allowNull: false,
 				type: Sequelize.BOOLEAN,
