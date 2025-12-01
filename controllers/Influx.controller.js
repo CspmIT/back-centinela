@@ -27,7 +27,7 @@ async function InfluxConection(req, res) {
 async function getSimpleInfluxData(influxVar, user) {
     const { influx_name = false } = user
     if (!influx_name) throw new Error('Tenes que estar logeado para hacer esta consulta')
-        
+
     // Si la variable es calculada
     if (influxVar?.calc) {
         // Consultar cada subvariable definida en varsInflux
@@ -69,26 +69,31 @@ async function getSimpleInfluxData(influxVar, user) {
             console.error('Expresion invalida en variable calculada:', err.message)
             return { value: null }
         }
-    } 
+    }
     else {
         const simpleConfig = Object.values(influxVar.varsInflux).shift();
         const query = await generateQuery(simpleConfig);
         const dataInflux = await ConsultaInflux(query, influx_name);
-        const row = dataInflux.shift();
-        console.log(influxVar);
-      
-        // Si es binario comprimido, descomprimimos
-        if (influxVar.binary_compressed) {
-          const bitRows = await db.VarsBinaryCompressedData.findAll({ where: { id_var: influxVar.id }});
-          const decoded = mapBitsToBombs(row._value ?? 0, bitRows, 8);
-          console.log(decoded);
-          return { bits: decoded };
+
+        if (!Array.isArray(dataInflux) || dataInflux.length === 0) {
+            return { value: null };
         }
-      
+
+        const row = dataInflux[0];
+        // Si es binario comprimido, descomprimimos
+        if (influxVar.binary_compressed === true) {
+            const bitRows = await db.VarsBinaryCompressedData.findAll({
+                where: { id_var: influxVar.id }
+            });
+
+            const decoded = mapBitsToBombs(row?._value ?? 0, bitRows, 8);
+            return { bits: decoded };
+        }
+
         // Si no es comprimida → flujo tradicional
         const formattedData = await fomratInfluxData(dataInflux);
         return formattedData;
-      }
+    }
 }
 
 // SE USA PARA OBTENER MULTIPLES VALORES EN UNA SOLA CONSULTA (PARA GRAFICOS LINEALES)
@@ -117,7 +122,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         const key = `${row.topic}::${row._field}`
         if (!grouped[key]) grouped[key] = []
         grouped[key].push({
-            _time: row._time,   
+            _time: row._time,
             _value: row._value,
             topic: row.topic,
             _field: row._field,
@@ -172,7 +177,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
 async function SeriesDataInflux(req, res) {
     try {
         const influxVars = req.body
-        
+
         const { user = false } = req
         if (!user) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
@@ -239,16 +244,16 @@ async function getMultipleSimpleValues(req, res) {
 
             // SI ES BINARIO COMPRIMIDO Y VIENEN BITS
             if (valueInflux?.bits) {
-              finalValue = valueInflux.bits;
+                finalValue = valueInflux.bits;
             }
             // SI VIENE VALUE CALCULADA
             else if (typeof valueInflux?.value !== 'undefined') {
-              finalValue = valueInflux.value;
+                finalValue = valueInflux.value;
             }
             // SI VIENE OBJETO SIMPLE INTERNO { id: { value:X } }
             else if (valueInflux && typeof valueInflux === 'object' && Object.keys(valueInflux).length) {
-              const first = Object.values(valueInflux)[0];
-              finalValue = first?.value ?? 0;
+                const first = Object.values(valueInflux)[0];
+                finalValue = first?.value ?? 0;
             }
 
             results[influxVar.id] = finalValue;
