@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
 			// define association here
 			this.belongsTo(models.DiagramImage, { foreignKey: 'id_image', as: 'image' })
 			this.belongsTo(models.InfluxVar, { foreignKey: 'id_influxvars', as: 'variable' })
+			this.belongsTo(models.VarsBinaryCompressedData, { foreignKey: 'id_bit', as: 'bit' })
 		}
 	}
 	DiagramImageData.init(
@@ -23,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
 			max_value_var: DataTypes.FLOAT,
 			status: DataTypes.BOOLEAN,
 			boolean_colors: DataTypes.JSON,
+			id_bit: DataTypes.INTEGER,
 		},
 		{
 			sequelize,

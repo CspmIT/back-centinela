@@ -8,6 +8,8 @@ const {
     generateQuery,
     generateQueryHistorical,
 } = require('../utils/js/queryBuilder')
+const { mapBitsToBombs } = require('../utils/js/binaryDecompressor');
+const { db } = require('../models')
 
 async function InfluxConection(req, res) {
     try {
@@ -69,12 +71,24 @@ async function getSimpleInfluxData(influxVar, user) {
         }
     } 
     else {
-        // Variable NO calculada → flujo original
-        const query = await generateQuery(Object.values(influxVar.varsInflux).shift())
-        const dataInflux = await ConsultaInflux(query, influx_name)
-        const formattedData = await fomratInfluxData(dataInflux)
-        return formattedData
-    }
+        const simpleConfig = Object.values(influxVar.varsInflux).shift();
+        const query = await generateQuery(simpleConfig);
+        const dataInflux = await ConsultaInflux(query, influx_name);
+        const row = dataInflux.shift();
+        console.log(influxVar);
+      
+        // Si es binario comprimido, descomprimimos
+        if (influxVar.binary_compressed) {
+          const bitRows = await db.VarsBinaryCompressedData.findAll({ where: { id_var: influxVar.id }});
+          const decoded = mapBitsToBombs(row._value ?? 0, bitRows, 8);
+          console.log(decoded);
+          return { bits: decoded };
+        }
+      
+        // Si no es comprimida → flujo tradicional
+        const formattedData = await fomratInfluxData(dataInflux);
+        return formattedData;
+      }
 }
 
 // SE USA PARA OBTENER MULTIPLES VALORES EN UNA SOLA CONSULTA (PARA GRAFICOS LINEALES)
@@ -221,24 +235,23 @@ async function getMultipleSimpleValues(req, res) {
         for (const item of dataInflux) {
             const influxVar = item.dataInflux
             const valueInflux = await getSimpleInfluxData(influxVar, user)
+            let finalValue = 0;
 
-            let value;
-
-            // variable calculada
-            if (valueInflux && typeof valueInflux.value !== 'undefined') {
-                value = valueInflux.value
+            // SI ES BINARIO COMPRIMIDO Y VIENEN BITS
+            if (valueInflux?.bits) {
+              finalValue = valueInflux.bits;
             }
-            // Caso 2: variable simple
-            else if (valueInflux && typeof valueInflux === 'object') {
-                // Tomamos el primer valor del objeto interno
-                const first = Object.values(valueInflux)[0]
-                value = first?.value ?? 0
+            // SI VIENE VALUE CALCULADA
+            else if (typeof valueInflux?.value !== 'undefined') {
+              finalValue = valueInflux.value;
             }
-            else {
-                value = 0
+            // SI VIENE OBJETO SIMPLE INTERNO { id: { value:X } }
+            else if (valueInflux && typeof valueInflux === 'object' && Object.keys(valueInflux).length) {
+              const first = Object.values(valueInflux)[0];
+              finalValue = first?.value ?? 0;
             }
 
-            results[influxVar.id] = value
+            results[influxVar.id] = finalValue;
         }
 
         return res.status(200).json(results)

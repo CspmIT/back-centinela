@@ -71,6 +71,7 @@ const saveDiagram = async (req, res) => {
             position_var: image.variables[nameVar].position || null,
             max_value_var: image.variables[nameVar].max_value || null,
             boolean_colors: image.variables[nameVar].boolean_colors || null,
+            id_bit: image.variables[nameVar].id_bit || null, 
             status: true,
           }));
 
