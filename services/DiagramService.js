@@ -12,94 +12,101 @@ const listDiagram = async () => {
 const ObjectsDiagram = async (id) => {
 	try {
 		const Diagram = await db.Diagram.findAll({
-			where: { id: id},
+			where: { id: id },
 			include: [
 				{
-				  association: 'images',
-				  required: false,
-				  where: { status: 1 },
-				  include: [
-					{
-					  association: 'variables',
-					  required: false,
-					  where: { status: 1 },
-					  include: [
+					association: 'images',
+					required: false,
+					where: { status: 1 },
+					include: [
 						{
-						  association: 'variable',
-						  required: false,
-						  attributes: ['unit', 'type', 'calc', 'varsInflux', 'equation', 'status', 'binary_compressed'],
+							association: 'variables',
+							required: false,
+							where: { status: 1 },
+							include: [
+								{
+									association: 'variable',
+									required: false,
+									attributes: ['unit', 'type', 'calc', 'varsInflux', 'equation', 'status', 'binary_compressed'],
+								},
+								{
+									association: 'bit',
+									required: false,
+									attributes: ['id', 'name', 'bit']
+								}
+							],
 						},
-					  ],
-					},
-				  ],
+					],
 				},
 				{
-				  association: 'lines',
-				  required: false,
-				  where: { status: 1 },
-				  include: [
-					{
-					  association: 'variable',
-					  required: false,
-					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
-					},
-				  ],
+					association: 'lines',
+					required: false,
+					where: { status: 1 },
+					include: [
+						{
+							association: 'variable',
+							required: false,
+							attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+						},
+					],
 				},
 				{
-				  association: 'texts',
-				  required: false,
-				  where: { status: 1 },
-				  include: [
-					{
-					  association: 'variable',
-					  required: false,
-					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
-					},
-				  ],
+					association: 'texts',
+					required: false,
+					where: { status: 1 },
+					include: [
+						{
+							association: 'variable',
+							required: false,
+							attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+						},
+					],
 				},
 				{
-				  association: 'polylines',
-				  required: false,
-				  where: { status: 1 },
-				  include: [
-					{
-					  association: 'variable',
-					  required: false,
-					  attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
-					},
-				  ],
+					association: 'polylines',
+					required: false,
+					where: { status: 1 },
+					include: [
+						{
+							association: 'variable',
+							required: false,
+							attributes: ['name', 'unit', 'type', 'calc', 'varsInflux', 'equation', 'status'],
+						},
+					],
 				},
-			  ],
+			],
 		})
 
 		const normalizedDiagram = Diagram.map((d) => {
 			const diagramObj = d.toJSON();
-		  
-			diagramObj.images = diagramObj.images?.map((img) => {
-			  const variable = img.variables?.[0]?.variable;
-			  return {
-				...img,
-				dataInflux: variable
-				  ? {
-					  id_variable: img.variables[0].id_influxvars, 
-					  name: variable.name || img.variables[0].name_var,
-					  unit: variable.unit, 
-					  type: variable.type,
-					  calc: variable.calc,
-					  varsInflux: variable.varsInflux,
-					  equation: variable.equation,
-					  status: variable.status,
-					}
-				  : null,
-			  };
-			});
-		  
-			return diagramObj;
-		  });
-		  
-		  return normalizedDiagram;
 
-	
+			diagramObj.images = diagramObj.images?.map((img) => {
+				const variable = img.variables?.[0]?.variable;
+				const bit = img.variables?.[0]?.bit;
+				return {
+					...img,
+					dataInflux: variable
+						? {
+							id_variable: img.variables[0].id_influxvars,
+							name: variable.name || img.variables[0].name_var,
+							unit: variable.unit,
+							type: variable.type,
+							calc: variable.calc,
+							varsInflux: variable.varsInflux,
+							equation: variable.equation,
+							status: variable.status,
+							bit_name: bit?.name || null,
+						}
+						: null,
+				};
+			});
+
+			return diagramObj;
+		});
+
+		return normalizedDiagram;
+
+
 	} catch (error) {
 		throw error
 	}
