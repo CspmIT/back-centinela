@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
 			equation: DataTypes.JSON,
 			status: DataTypes.BOOLEAN,
 			binary_compressed: DataTypes.BOOLEAN,
+			process: DataTypes.STRING,
 		},
 		{
 			sequelize,
