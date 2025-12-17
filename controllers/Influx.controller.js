@@ -30,36 +30,46 @@ async function getSimpleInfluxData(influxVar, user) {
 
     // Si la variable es calculada
     if (influxVar?.calc) {
-        // Consultar cada subvariable definida en varsInflux
-        const results = await Promise.all(
-            Object.entries(influxVar.varsInflux).map(async ([varName, varConfig]) => {
-                const query = await generateQuery(varConfig)
-                const data = await ConsultaInflux(query, influx_name)
-                // Buscar el valor según calc_field
-                const valueRow = Array.isArray(data)
-                    ? data.find((row) => row._field === varConfig.calc_field)
-                    : null
 
-                return { varName, value: valueRow ? valueRow._value : 0 }
-            })
+        const results = await Promise.all(
+            Object.entries(influxVar.varsInflux).map(
+                async ([varName, varConfig]) => {
+                    const query = await generateQuery(varConfig)
+                    const data = await ConsultaInflux(query, influx_name)
+
+                    const valueRow = Array.isArray(data)
+                        ? data.find(row => row._field === varConfig.calc_field)
+                        : null
+
+                    return {
+                        varName,
+                        value: valueRow?._value,
+                        hasData: valueRow?._value !== null && valueRow?._value !== undefined
+                    }
+                }
+            )
         )
 
-        // Crear un diccionario { varName: value }
+        // Si alguna subvariable no tiene datos → 0
+        const hasAllData = results.every(r => r.hasData)
+        if (!hasAllData) {
+            return { value: 0 }
+        }
+
+        // Mapear valores reales
         const valuesMap = results.reduce((acc, { varName, value }) => {
             acc[varName] = value
             return acc
         }, {})
-        // Reemplazar las variables en la ecuación
+
         let evaluableExpression = influxVar.equation
-            .map((part) => {
+            .map(part => {
                 const match = part.match(/^{{(.+?)}}$/)
-                return match ? valuesMap[match[1]] ?? 0 : part
+                return match ? valuesMap[match[1]] : part
             })
             .join(' ')
+            .replace(/(\d)\s+(\d)/g, '$1$2')
 
-        // Evitar números pegados sin operador
-        evaluableExpression = evaluableExpression.replace(/(\d)\s+(\d)/g, '$1$2')
-        // Evaluar la ecuación con seguridad
         try {
             const { Parser } = require('expr-eval')
             const parser = new Parser()
@@ -67,7 +77,7 @@ async function getSimpleInfluxData(influxVar, user) {
             return { value }
         } catch (err) {
             console.error('Expresion invalida en variable calculada:', err.message)
-            return { value: null }
+            return { value: 0 }
         }
     }
     else {
