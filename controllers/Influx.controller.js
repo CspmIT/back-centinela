@@ -144,11 +144,38 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         }
 
         // Si es calculada
+        const hasRealData = serie.some(
+            p => p._value !== null && p._value !== undefined
+        )
+
+        // Sensor sin datos reales → devolver 0
+        if (!hasRealData) {
+            formattedData[influxVar.varId] = formatInfluxSeriesArray(
+                serie.map(p => ({
+                    _field: influxVar.field,
+                    _value: 0,
+                    _time: p._time,
+                    topic: p.topic,
+                }))
+            )
+            continue
+        }
+
+        // Sensor con datos → calcular
         const calcSerie = serie.map(point => {
+            if (point._value == null) {
+                return {
+                    _field: influxVar.field,
+                    _value: 0,
+                    _time: point._time,
+                    topic: point.topic,
+                }
+            }
+
             let expression = influxVar.equation
                 .map(part => {
                     const match = part.match(/^{{(.+?)}}$/)
-                    return match ? point._value ?? 0 : part
+                    return match ? point._value : part
                 })
                 .join(' ')
                 .replace(/(\d)\s+(\d)/g, '$1$2')
@@ -157,7 +184,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
             try {
                 value = parser.evaluate(expression)
             } catch {
-                value = null
+                value = 0
             }
 
             return {
