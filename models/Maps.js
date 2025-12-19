@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Maps.init(
         {
+            name: DataTypes.STRING,
             bearing: DataTypes.DECIMAL(19, 15),
             latitude: DataTypes.DECIMAL(19, 15),
             longitude: DataTypes.DECIMAL(19, 15),
