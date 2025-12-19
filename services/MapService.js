@@ -32,11 +32,12 @@ class MapService {
     }
 
     static async createMap(map) {
+        console.log(map)
         const t = await db.sequelize.transaction()
-        const { viewState, markers } = map
+        const {name, viewState, markers } = map
 
         try {
-            const newMap = await db.Maps.create(viewState, { transaction: t })
+            const newMap = await db.Maps.create({name, ...viewState}, { transaction: t })
 
             // Guardar los markers y popups en paralelo
             const markersData = await Promise.all(
@@ -71,8 +72,8 @@ class MapService {
 
     static async editMap(id, map) {
         const t = await db.sequelize.transaction()
-        const { viewState, markers } = map
-
+        
+        const {name, viewState, markers } = map
         try {
             // Buscar el mapa existente
             const existingMap = await db.Maps.findByPk(id, { transaction: t })
@@ -81,7 +82,7 @@ class MapService {
             }
 
             // Actualizar los datos del mapa
-            await existingMap.update(viewState, { transaction: t })
+            await existingMap.update({name, ...viewState}, { transaction: t })
 
             // Primero eliminar los popups asociados a los markers
             await db.PopUpsMarkers.destroy({
