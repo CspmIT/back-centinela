@@ -112,19 +112,42 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
         throw new Error('Tenes que estar logeado para hacer esta consulta')
 
     const influxName = user.influx_name
+    const first = queryObject[0]
 
     const topics = [...new Set(queryObject.map(q => q.topic))]
     const fields = [...new Set(queryObject.map(q => q.field))]
 
-    // 🔹 Armar batchQuery (una sola llamada a Influx)
+    let rangeClause = ''
+  
+    if (first.typePeriod === 'between') {
+      if (!first.dateFrom || !first.dateTo) {
+        throw new Error('Rango absoluto inválido')
+      }
+  
+      const toUTC = (dateStr) => {
+        const date = new Date(dateStr)
+        date.setHours(date.getHours())
+        return date.toISOString()
+      }
+      
+      rangeClause = `
+        |> range(start: time(v: "${toUTC(first.dateFrom)}"), stop: time(v: "${toUTC(first.dateTo)}"))
+      `      
+    } else {
+      rangeClause = `
+        |> range(start: ${first.dateRange}, stop: now())
+      `
+    }
+  
+    const aggregationFn = 'mean'
+  
     const batchQuery = `
-        |> range(start: ${queryObject[0].dateRange}, stop: now())
-        |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
-        |> filter(fn: (r) => ${fields.map(f => `r._field == "${f}"`).join(' or ')})
-        |> aggregateWindow(every: ${queryObject[0].samplingPeriod}, fn: ${queryObject[0].typePeriod}, createEmpty: true)
-        |> yield(name: "${queryObject[0].typePeriod}")
+      ${rangeClause}
+      |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
+      |> filter(fn: (r) => ${fields.map(f => `r._field == "${f}"`).join(' or ')})
+      |> aggregateWindow( every: ${first.samplingPeriod}, fn: ${aggregationFn}, createEmpty: false)
+      |> yield(name: "${aggregationFn}")
     `
-
     const rawData = await ConsultaInflux(batchQuery, influxName)
 
     const grouped = {}
