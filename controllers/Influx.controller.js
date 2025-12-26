@@ -126,7 +126,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
   
       const toUTC = (dateStr) => {
         const date = new Date(dateStr)
-        date.setHours(date.getHours())
+        date.setHours(date.getHours() + 3)
         return date.toISOString()
       }
       
