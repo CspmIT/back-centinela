@@ -139,7 +139,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
       `
     }
   
-    const aggregationFn = 'mean'
+    const aggregationFn = first.type
   
     const batchQuery = `
       ${rangeClause}
