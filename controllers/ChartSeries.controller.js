@@ -29,6 +29,7 @@ const generateSeriesChart = async (validatedChart) => {
     })
 
     const chartSeriesData = validatedChart.yData
+    
     return {
         chart,
         chartConfig,
