@@ -93,24 +93,35 @@ const alarmsChecked = async (user) => {
 			// FUNCION AUXILIAR PARA LEER VALORES
 			const getValueForVar = async (influxVar) => {
 				if (!influxVar) return null
-
+				//funcion para traducir valores booleanos a 1 y 0
+				const normalizeValue = (val) => {
+					if (typeof val === 'boolean') return val ? 1 : 0
+					if (val === 'true') return 1
+					if (val === 'false') return 0
+			
+					const num = Number(val)
+					return isNaN(num) ? null : num
+				}
+			
 				if (influxVar.type === 'history') {
 					const historyData = await getHistorcalInfluxData(influxVar, user)
 					if (!Array.isArray(historyData) || historyData.length === 0) return null
+			
 					const lastPoint = historyData.at(-1)
-					return parseFloat(lastPoint?._value)
+					return normalizeValue(lastPoint?._value)
+			
 				} else {
 					const simpleData = await getSimpleInfluxData(influxVar, user)
 					if (!simpleData || Object.keys(simpleData).length === 0) return null
-
+			
 					if (typeof simpleData.value !== 'undefined') {
-						return parseFloat(simpleData.value)
-					} else {
-						const firstKey = Object.keys(simpleData)[0]
-						return parseFloat(simpleData[firstKey]?.value)
+						return normalizeValue(simpleData.value)
 					}
+			
+					const firstKey = Object.keys(simpleData)[0]
+					return normalizeValue(simpleData[firstKey]?.value)
 				}
-			}
+			}			
 
 			// LEER VALOR VARIABLE PRINCIPAL
 			const primaryValue = await getValueForVar(alarm.variable)
