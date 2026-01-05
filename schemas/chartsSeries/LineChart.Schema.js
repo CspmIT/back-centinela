@@ -42,6 +42,7 @@ const yDataSchema = z.object({
     line: z.enum(['line', 'smooth', 'bar', 'scatter']),
     smooth: z.boolean({ message: 'Se esperaba un booleano' }),
     color: z.string({ message: 'El color debe ser un string y es requerido' }),
+    areaStyle: z.boolean({ message: 'Se esperaba un booleano' }).optional(),
 })
 
 const LineChartSchema = z.object({
