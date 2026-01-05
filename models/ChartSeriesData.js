@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
             color: DataTypes.STRING(20),
             line: DataTypes.STRING(20),
             smooth: DataTypes.BOOLEAN,
+            areaStyle: DataTypes.BOOLEAN,
         },
         {
             sequelize,
