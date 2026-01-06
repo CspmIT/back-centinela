@@ -30,13 +30,12 @@ async function getSimpleInfluxData(influxVar, user) {
 
     // Si la variable es calculada
     if (influxVar?.calc) {
-
         const results = await Promise.all(
             Object.entries(influxVar.varsInflux).map(
                 async ([varName, varConfig]) => {
                     const query = await generateQuery(varConfig)
                     const data = await ConsultaInflux(query, influx_name)
-
+                    
                     const valueRow = Array.isArray(data)
                         ? data.find(row => row._field === varConfig.calc_field)
                         : null
@@ -59,16 +58,25 @@ async function getSimpleInfluxData(influxVar, user) {
         // Mapear valores reales
         const valuesMap = results.reduce((acc, { varName, value }) => {
             acc[varName] = value
+            console.log(acc)
             return acc
         }, {})
-
+        Object.keys(valuesMap).forEach(k => {
+            if (typeof valuesMap[k] === 'boolean') {
+                valuesMap[k] = valuesMap[k] ? 1 : 0
+            }
+        })
+        
         let evaluableExpression = influxVar.equation
-            .map(part => {
-                const match = part.match(/^{{(.+?)}}$/)
-                return match ? valuesMap[match[1]] : part
-            })
-            .join(' ')
-            .replace(/(\d)\s+(\d)/g, '$1$2')
+        .map(part => {
+            const match = part.match(/^{{(.+?)}}$/)
+            return match ? valuesMap[match[1]] : part
+        })
+        .join(' ')
+        .replace(/(\d)\s+(\d)/g, '$1$2')
+        .replace(/\s&&\s/g, ' and ')
+        .replace(/\s\|\s/g, ' or ')
+        .replace(/\s\!\s/g, ' not ')
 
         try {
             const { Parser } = require('expr-eval')
@@ -77,7 +85,7 @@ async function getSimpleInfluxData(influxVar, user) {
             return { value }
         } catch (err) {
             console.error('Expresion invalida en variable calculada:', err.message)
-            return { value: 0 }
+            return { value: null }
         }
     }
     else {

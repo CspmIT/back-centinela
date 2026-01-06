@@ -93,7 +93,7 @@ const alarmsChecked = async (user) => {
 			// FUNCION AUXILIAR PARA LEER VALORES
 			const getValueForVar = async (influxVar) => {
 				if (!influxVar) return null
-				//funcion para traducir valores booleanos a 1 y 0
+			
 				const normalizeValue = (val) => {
 					if (typeof val === 'boolean') return val ? 1 : 0
 					if (val === 'true') return 1
@@ -114,14 +114,17 @@ const alarmsChecked = async (user) => {
 					const simpleData = await getSimpleInfluxData(influxVar, user)
 					if (!simpleData || Object.keys(simpleData).length === 0) return null
 			
+					// Caso: { value: ... }
 					if (typeof simpleData.value !== 'undefined') {
 						return normalizeValue(simpleData.value)
 					}
 			
+					// Caso: { dato_25: { value: false } }
 					const firstKey = Object.keys(simpleData)[0]
 					return normalizeValue(simpleData[firstKey]?.value)
 				}
-			}			
+			}
+					
 
 			// LEER VALOR VARIABLE PRINCIPAL
 			const primaryValue = await getValueForVar(alarm.variable)
