@@ -280,6 +280,36 @@ const changeViewedAlarm = async (id) => {
 	}
 };
 
+const listLogs_Cronjob = async () => {
+	try {
+		const Logs_Cronjob = await db.Logs_Cronjob.findAll({
+			order: [['createdAt', 'DESC']],
+		})
+
+		const formattedLogs = Logs_Cronjob.map(log => {
+			const originalDate = new Date(log.createdAt)
+			const formattedDate = originalDate.toLocaleString('es-AR', {
+				timeZone: 'America/Argentina/Cordoba',
+				hour12: false,
+				year: '2-digit',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+			})
+
+			return {
+				...log.toJSON(),
+				createdAt: formattedDate
+			}
+		})
+
+		return formattedLogs
+	} catch (error) {
+		throw error
+	}
+}
+
 
 module.exports = {
 	listAlarms,
@@ -288,5 +318,6 @@ module.exports = {
 	changeStatusAlarm,
 	alarmsChecked,
 	listLogs_Alarms,
-	changeViewedAlarm
+	changeViewedAlarm,
+	listLogs_Cronjob
 }
