@@ -5,7 +5,8 @@ const {
   changeStatusAlarm,
   alarmsChecked,
   listLogs_Alarms,
-  changeViewedAlarm
+  changeViewedAlarm,
+  listLogs_Cronjob
 } = require('../services/AlarmsService')
 const { createDbForSchema, db } = require('../models')
 const { listClients, influxByClient } = require('../utils/js/clients')
@@ -157,6 +158,19 @@ const getUnreadAlertCount = async (req, res) => {
   }
 }
 
+const getLog_Cronjob = async (req, res) => {
+  try {
+    const logs = await listLogs_Cronjob();
+    return res.status(200).json(logs)
+  } catch (error) {
+    if (error.errors) {
+      res.status(500).json(error.errors)
+    } else {
+      res.status(400).json(error.message)
+    }
+  }
+}
+
 module.exports = {
   getAlarms,
   addAlarms,
@@ -166,5 +180,6 @@ module.exports = {
   publicCheckAlarms,
   getLog_Alarms,
   markAlertAsViewed,
-  getUnreadAlertCount
+  getUnreadAlertCount,
+  getLog_Cronjob
 }
