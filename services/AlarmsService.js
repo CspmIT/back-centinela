@@ -284,6 +284,7 @@ const listLogs_Cronjob = async () => {
 	try {
 		const Logs_Cronjob = await db.Logs_Cronjob.findAll({
 			order: [['createdAt', 'DESC']],
+			limit: 60,
 		})
 
 		const formattedLogs = Logs_Cronjob.map(log => {
