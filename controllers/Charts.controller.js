@@ -57,8 +57,8 @@ const createChart = async (req, res) => {
         const { autorizedConfigKeys, autorizedDataKeys } = getKeys(type)
         baseChart.order = parseInt(baseChart.order)
         const validChart = validationsTypes[type].safeParse(baseChart)
-
         if (!validChart.success) {
+            console.log(validChart.error.issues)
             throw new Error(validChart.error.errors[0].message)
         }
         let filteredKeys = autorizedDataKeys
@@ -66,7 +66,6 @@ const createChart = async (req, res) => {
             //No se guarda unidad
             filteredKeys = autorizedDataKeys.filter((key) => key !== 'unidad')
         }
-
         const chartBuilder = new ChartBuilder(autorizedConfigKeys, filteredKeys)
 
         const { chart, config, data } = chartBuilder.build(baseChart)
@@ -134,7 +133,7 @@ const getKeys = (type) => {
         BooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
     }
     const autorizedDataKeys = {
-        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad'],
+        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2'],
         CirclePorcentaje: ['maxValue', 'value'],
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
         BooleanChart: ['value'],

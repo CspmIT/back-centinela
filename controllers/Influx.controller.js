@@ -91,9 +91,9 @@ async function getSimpleInfluxData(influxVar, user) {
         const simpleConfig = Object.values(influxVar.varsInflux).shift();
         const query = await generateQuery(simpleConfig);
         const dataInflux = await ConsultaInflux(query, influx_name);
-
+        
         if (!Array.isArray(dataInflux) || dataInflux.length === 0) {
-            return { value: null };
+            return { value: 'Sin datos' };
         }
 
         const row = dataInflux[0];

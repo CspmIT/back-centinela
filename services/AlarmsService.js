@@ -128,10 +128,6 @@ const alarmsChecked = async (user) => {
 
 			// LEER VALOR VARIABLE PRINCIPAL
 			const primaryValue = await getValueForVar(alarm.variable)
-			if (primaryValue === null || isNaN(primaryValue)) {
-				console.log(`La alarma "${alarm.name}" tiene valor nulo o inválido ${alarm.variable.name}: (${primaryValue})`)
-				continue
-			}
 
 			// EVALUAR CONDICIÓN PRINCIPAL
 			const evaluateCondition = (val, cond, val1, val2) => {
@@ -157,10 +153,6 @@ const alarmsChecked = async (user) => {
 			// SI ES UNA ALARMA COMBINADA
 			else if (alarm.type === 'combined') {
 				secondaryValue = await getValueForVar(alarm.secondaryVariable)
-				if (secondaryValue === null || isNaN(secondaryValue)) {
-					console.log(`La alarma combinada "${alarm.name}" no tiene valor secundario válido ${alarm.secondaryVariable.name}: (${secondaryValue})`)
-					continue
-				}
 
 				const primaryTriggered = evaluateCondition(primaryValue, alarm.condition, alarm.value, alarm.value2)
 				const secondaryTriggered = evaluateCondition(
