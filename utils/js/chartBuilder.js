@@ -16,6 +16,7 @@ class ChartBuilder {
      * @returns {Object} - Objetos para guardar en la base de datos.
      */
     build(inputData) {
+        const type = inputData.type
         const chart = {
             name: inputData.title,
             type: inputData.type,
@@ -32,22 +33,66 @@ class ChartBuilder {
             }
         })
 
-        const data = this.allowedDataKeys.map((key) => {
-            if (key === 'value') {
-                return {
-                    key,
-                    value: null,
-                    source_id: inputData['idVar'],
+        let data
+
+        if (type === 'LiquidFillPorcentaje') {
+
+            data = this.allowedDataKeys
+                .map((key) => {
+                    const chartItem = Array.isArray(inputData.chartData)
+                        ? inputData.chartData.find((item) => item.key === key)
+                        : null
+
+                    // value y secondary → vienen de Influx
+                    if (key === 'value' || key === 'secondary') {
+                        return {
+                            key,
+                            value: null,
+                            source_id: chartItem?.idVar ?? null,
+                            label: chartItem?.label ?? key,
+                        }
+                    }
+
+                    // bottom1 / bottom2 → pueden tener label + influx
+                    if (key === 'bottom1' || key === 'bottom2') {
+                        if (!chartItem) return null
+
+                        return {
+                            key,
+                            value: null,
+                            source_id: chartItem.idVar ?? null,
+                            label: chartItem.label ?? key,
+                        }
+                    }
+
+                    // maxValue, unidad, etc
+                    return {
+                        key,
+                        value: inputData[key] ?? null,
+                        source_id: null,
+                        label: key,
+                    }
+                })
+                .filter(Boolean)
+        } else {
+            data = this.allowedDataKeys.map((key) => {
+                if (key === 'value') {
+                    return {
+                        key,
+                        value: null,
+                        source_id: inputData['idVar'],
+                    }
+                } else {
+                    // Si unidad llega vacia, me fijo si porcentaje en configuracion es true y no guardo ningun registro para unidad
+                    return {
+                        key,
+                        value: inputData[key],
+                        source_id: null,
+                    }
                 }
-            } else {
-                // Si unidad llega vacia, me fijo si porcentaje en configuracion es true y no guardo ningun registro para unidad
-                return {
-                    key,
-                    value: inputData[key],
-                    source_id: null,
-                }
-            }
-        })
+            })
+        }
+
 
         // Validar y construir Chart
         const chartObj = this.validateChart(chart)
@@ -56,7 +101,7 @@ class ChartBuilder {
         const configObj = this.validateConfig(config, chart.type)
 
         // Validar y construir ChartData
-        const dataObj = this.validateData(data)
+        const dataObj = this.validateData(data, chart.type)
 
         return { chart: chartObj, config: configObj, data: dataObj }
     }
@@ -109,19 +154,14 @@ class ChartBuilder {
      * @param {Object[]} data - Lista de datos para el gráfico.
      * @returns {Object[]} - Lista de datos válidos.
      */
-    validateData(data) {
+    validateData(data, chartType) {
         const allowedDataKeys = this.allowedDataKeys
+
         const dataArray = data.reduce((acc, item) => {
-            const { key, value, source_id } = item
+            const { key, value, source_id, label } = item
 
             if (!key) {
                 throw new Error("Cada objeto de 'data' debe contener 'key'.")
-            }
-
-            if (value && source_id) {
-                throw new Error(
-                    "Cada objeto de 'data' solo puede contener 'value' o 'source_id'."
-                )
             }
 
             if (!allowedDataKeys.includes(key)) {
@@ -130,7 +170,35 @@ class ChartBuilder {
                 )
             }
 
-            acc.push({ key, value, source_id, label: key })
+            /* ===============================
+               LÓGICA ESPECIAL – LiquidFill
+            ================================ */
+            if (chartType === 'LiquidFillPorcentaje') {
+                acc.push({
+                    key,
+                    value: value ?? null,
+                    source_id: source_id ?? null,
+                    label: label ?? key,
+                })
+                return acc
+            }
+
+            /* ===============================
+               LÓGICA GENERAL – resto de gráficos
+            ================================ */
+            if (value && source_id) {
+                throw new Error(
+                    "Cada objeto de 'data' solo puede contener 'value' o 'source_id'."
+                )
+            }
+
+            acc.push({
+                key,
+                value: value ?? null,
+                source_id: source_id ?? null,
+                label: key,
+            })
+
             return acc
         }, [])
 
