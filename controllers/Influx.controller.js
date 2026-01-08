@@ -58,7 +58,6 @@ async function getSimpleInfluxData(influxVar, user) {
         // Mapear valores reales
         const valuesMap = results.reduce((acc, { varName, value }) => {
             acc[varName] = value
-            console.log(acc)
             return acc
         }, {})
         Object.keys(valuesMap).forEach(k => {
