@@ -65,6 +65,7 @@ async function getSimpleInfluxData(influxVar, user) {
                 valuesMap[k] = valuesMap[k] ? 1 : 0
             }
         })
+        console.log('Valores reales de cada Variable:', valuesMap)
         
         let evaluableExpression = influxVar.equation
         .map(part => {
@@ -80,7 +81,9 @@ async function getSimpleInfluxData(influxVar, user) {
         try {
             const { Parser } = require('expr-eval')
             const parser = new Parser()
+            console.log('Ecuacion:', evaluableExpression)
             const value = parser.evaluate(evaluableExpression)
+            console.log('Resultado:', value)
             return { value }
         } catch (err) {
             console.error('Expresion invalida en variable calculada:', err.message)
@@ -91,6 +94,7 @@ async function getSimpleInfluxData(influxVar, user) {
         const simpleConfig = Object.values(influxVar.varsInflux).shift();
         const query = await generateQuery(simpleConfig);
         const dataInflux = await ConsultaInflux(query, influx_name);
+        
         
         if (!Array.isArray(dataInflux) || dataInflux.length === 0) {
             return { value: 'Sin datos' };
