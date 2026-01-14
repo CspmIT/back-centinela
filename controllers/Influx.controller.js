@@ -35,7 +35,7 @@ async function getSimpleInfluxData(influxVar, user) {
                 async ([varName, varConfig]) => {
                     const query = await generateQuery(varConfig)
                     const data = await ConsultaInflux(query, influx_name)
-                    
+
                     const valueRow = Array.isArray(data)
                         ? data.find(row => row._field === varConfig.calc_field)
                         : null
@@ -65,25 +65,22 @@ async function getSimpleInfluxData(influxVar, user) {
                 valuesMap[k] = valuesMap[k] ? 1 : 0
             }
         })
-        console.log('Valores reales de cada Variable:', valuesMap)
-        
+
         let evaluableExpression = influxVar.equation
-        .map(part => {
-            const match = part.match(/^{{(.+?)}}$/)
-            return match ? valuesMap[match[1]] : part
-        })
-        .join(' ')
-        .replace(/(\d)\s+(\d)/g, '$1$2')
-        .replace(/\s&&\s/g, ' and ')
-        .replace(/\s\|\s/g, ' or ')
-        .replace(/\s\!\s/g, ' not ')
+            .map(part => {
+                const match = part.match(/^{{(.+?)}}$/)
+                return match ? valuesMap[match[1]] : part
+            })
+            .join(' ')
+            .replace(/(\d)\s+(\d)/g, '$1$2')
+            .replace(/\s&&\s/g, ' and ')
+            .replace(/\s\|\s/g, ' or ')
+            .replace(/\s\!\s/g, ' not ')
 
         try {
             const { Parser } = require('expr-eval')
             const parser = new Parser()
-            console.log('Ecuacion:', evaluableExpression)
             const value = parser.evaluate(evaluableExpression)
-            console.log('Resultado:', value)
             return { value }
         } catch (err) {
             console.error('Expresion invalida en variable calculada:', err.message)
@@ -94,8 +91,8 @@ async function getSimpleInfluxData(influxVar, user) {
         const simpleConfig = Object.values(influxVar.varsInflux).shift();
         const query = await generateQuery(simpleConfig);
         const dataInflux = await ConsultaInflux(query, influx_name);
-        
-        
+
+
         if (!Array.isArray(dataInflux) || dataInflux.length === 0) {
             return { value: 'Sin datos' };
         }
@@ -117,8 +114,35 @@ async function getSimpleInfluxData(influxVar, user) {
     }
 }
 
+async function SeriesDataInflux(req, res) {
+    try {
+        const influxVars = req.body
+        const { user } = req
+        if (!user) throw new Error('Tenes que estar logeado')
+
+        const varsByVarId = {}
+        for (const v of influxVars) {
+            if (!varsByVarId[v.varId]) varsByVarId[v.varId] = []
+            varsByVarId[v.varId].push(v)
+        }
+
+        const hasMultiCalc = Object.values(varsByVarId).some(
+            vars => vars.length > 1 && vars.some(v => v.calc)
+        )
+
+        const data = hasMultiCalc
+            ? await getMultipleCalculatedHistoricalInfluxData(influxVars, user)
+            : await getMultipleHistoricalInfluxData(influxVars, user)
+
+        return res.status(200).json(data)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
 // SE USA PARA OBTENER MULTIPLES VALORES EN UNA SOLA CONSULTA (PARA GRAFICOS LINEALES)
 async function getMultipleHistoricalInfluxData(queryObject, user) {
+
     if (!user?.influx_name)
         throw new Error('Tenes que estar logeado para hacer esta consulta')
 
@@ -129,29 +153,29 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
     const fields = [...new Set(queryObject.map(q => q.field))]
 
     let rangeClause = ''
-  
+
     if (first.typePeriod === 'between') {
-      if (!first.dateFrom || !first.dateTo) {
-        throw new Error('Rango absoluto inválido')
-      }
-  
-      const toUTC = (dateStr) => {
-        const date = new Date(dateStr)
-        date.setHours(date.getHours() + 3)
-        return date.toISOString()
-      }
-      
-      rangeClause = `
+        if (!first.dateFrom || !first.dateTo) {
+            throw new Error('Rango absoluto inválido')
+        }
+
+        const toUTC = (dateStr) => {
+            const date = new Date(dateStr)
+            date.setHours(date.getHours() + 3)
+            return date.toISOString()
+        }
+
+        rangeClause = `
         |> range(start: time(v: "${toUTC(first.dateFrom)}"), stop: time(v: "${toUTC(first.dateTo)}"))
-      `      
+      `
     } else {
-      rangeClause = `
+        rangeClause = `
         |> range(start: ${first.dateRange}, stop: now())
       `
     }
-  
+
     const aggregationFn = first.type
-  
+
     const batchQuery = `
       ${rangeClause}
       |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
@@ -160,7 +184,6 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
       |> yield(name: "${aggregationFn}")
     `
     const rawData = await ConsultaInflux(batchQuery, influxName)
-
     const grouped = {}
     for (const row of rawData) {
         const key = `${row.topic}::${row._field}`
@@ -245,26 +268,129 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
     return formattedData
 }
 
-async function SeriesDataInflux(req, res) {
-    try {
-        const influxVars = req.body
+async function getMultipleCalculatedHistoricalInfluxData(queryObject, user) {
+    if (!user?.influx_name)
+        throw new Error('Tenes que estar logeado')
 
-        const { user = false } = req
-        if (!user) {
-            throw new Error('Tenes que estar logeado para hacer esta consulta')
-        }
-        const data = await getMultipleHistoricalInfluxData(influxVars, user)
+    const influxName = user.influx_name
+    const first = queryObject[0]
 
-        if (data.length === 0) {
-            throw new Error('No se obtuvieron datos')
+    const topics = [...new Set(queryObject.map(q => q.topic))]
+    const fields = [...new Set(queryObject.map(q => q.field))]
+
+    let rangeClause = ''
+    if (first.typePeriod === 'between') {
+        const toUTC = (d) => {
+            const date = new Date(d)
+            date.setHours(date.getHours() + 3)
+            return date.toISOString()
         }
-        return res.status(200).json(data)
-    } catch (error) {
-        return res
-            .status(500)
-            .json({ message: error.message, stack: error.stack })
+        rangeClause = `
+        |> range(
+          start: time(v: "${toUTC(first.dateFrom)}"),
+          stop: time(v: "${toUTC(first.dateTo)}")
+        )
+      `
+    } else {
+        rangeClause = `|> range(start: ${first.dateRange}, stop: now())`
     }
+
+    const batchQuery = `
+      ${rangeClause}
+      |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
+      |> filter(fn: (r) => ${fields.map(f => `r._field == "${f}"`).join(' or ')})
+      |> aggregateWindow(
+        every: ${first.samplingPeriod},
+        fn: ${first.type},
+        createEmpty: false
+      )
+      |> yield(name: "agg")
+    `
+
+    const rawData = await ConsultaInflux(batchQuery, influxName)
+
+    // topic::field → serie
+    const grouped = {}
+    for (const r of rawData) {
+        const key = `${r.topic}::${r._field}`
+        if (!grouped[key]) grouped[key] = []
+        grouped[key].push(r)
+    }
+
+    // tiempo → { key: value }
+    const byTime = {}
+    for (const key in grouped) {
+        for (const p of grouped[key]) {
+            if (!byTime[p._time]) byTime[p._time] = {}
+            byTime[p._time][key] = p._value
+        }
+    }
+
+    const { Parser } = require('expr-eval')
+    const parser = new Parser()
+
+    const varsByVarId = {}
+    for (const q of queryObject) {
+        if (!varsByVarId[q.varId]) varsByVarId[q.varId] = []
+        varsByVarId[q.varId].push(q)
+    }
+
+    const formattedData = {}
+
+
+    for (const [varId, vars] of Object.entries(varsByVarId)) {
+        const sources = vars.map(v => ({
+            field: v.field,
+            topic: v.topic,
+            name: v.name,
+        }))
+        const equation = vars[0].equation
+        const resultSerie = []
+
+
+        for (const time of Object.keys(byTime).sort()) {
+            const inputs = {}
+            const valuesMap = {}
+
+            for (const v of vars) {
+                const key = `${v.topic}::${v.field}`
+                const val = byTime[time][key] ?? 0
+
+                valuesMap[v.name] = val
+                inputs[v.name] = val
+            }
+
+            let expression = equation
+                .map(p => {
+                    const m = p.match(/^{{(.+?)}}$/)
+                    return m ? valuesMap[m[1]] : p
+                })
+                .join(' ')
+
+            let value = 0
+            try {
+                value = parser.evaluate(expression)
+            } catch { }
+
+            resultSerie.push({
+                _time: time,
+                _value: value,
+                _field: 'calculated',
+                topic: 'calculated',
+                sources,
+                inputs,
+                expression
+            })
+        }
+
+        formattedData[varId] = formatInfluxSeriesArray(resultSerie)
+    }
+
+    return formattedData
 }
+
+
+
 
 async function getHistorcalInfluxData(influxVar, user) {
     const query = await generateQueryHistorical(influxVar)
