@@ -126,19 +126,35 @@ async function SeriesDataInflux(req, res) {
             varsByVarId[v.varId].push(v)
         }
 
-        const hasMultiCalc = Object.values(varsByVarId).some(
-            vars => vars.length > 1 && vars.some(v => v.calc)
-        )
+        const calculatedVars = []
+        const simpleVars = []
 
-        const data = hasMultiCalc
-            ? await getMultipleCalculatedHistoricalInfluxData(influxVars, user)
-            : await getMultipleHistoricalInfluxData(influxVars, user)
+        for (const vars of Object.values(varsByVarId)) {
+            if (vars.length > 1 && vars.some(v => v.calc)) {
+                calculatedVars.push(...vars)
+            } else {
+                simpleVars.push(...vars)
+            }
+        }
 
-        return res.status(200).json(data)
+        const result = {}
+        
+        if (simpleVars.length) {
+            const simpleData = await getMultipleHistoricalInfluxData(simpleVars, user)
+            Object.assign(result, simpleData)
+        }
+
+        if (calculatedVars.length) {
+            const calcData = await getMultipleCalculatedHistoricalInfluxData(calculatedVars, user)
+            Object.assign(result, calcData)
+        }
+
+        return res.status(200).json(result)
     } catch (error) {
         return res.status(500).json({ message: error.message })
     }
 }
+
 
 // SE USA PARA OBTENER MULTIPLES VALORES EN UNA SOLA CONSULTA (PARA GRAFICOS LINEALES)
 async function getMultipleHistoricalInfluxData(queryObject, user) {
@@ -269,6 +285,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
 }
 
 async function getMultipleCalculatedHistoricalInfluxData(queryObject, user) {
+
     if (!user?.influx_name)
         throw new Error('Tenes que estar logeado')
 
