@@ -71,6 +71,10 @@ const formatInfluxSeriesArray = (influxSeries) => {
             value,
             time: formatter.format(new Date(element._time)), // Reemplazo de format()
             topic: element.topic,
+            ...(element.sources && { sources: element.sources }),
+            ...(element.inputs && { inputs: element.inputs }),
+            ...(element.expression && { ecuacion: element.expression }),
+
         }
     }
 
