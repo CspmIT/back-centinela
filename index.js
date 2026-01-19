@@ -20,6 +20,7 @@ const PLCRoutes = require('./routes/PlcGenerator.routes')
 const ChartPie = require('./routes/ChartPie.routes')
 const Alarms = require('./routes/Alarms.routes')
 const ExternalUsers = require('./routes/ExternalUsers.routes')
+const Bombs_PLCRoutes = require('./routes/Bombs_PLC.routes')
 // Configuracion para los cors
 const corsConfig = require('./config/app.conf')
 app.use(corsConfig)
@@ -45,6 +46,7 @@ app.use('/api/plc', PLCRoutes)
 app.use('/api', ChartPie)
 app.use('/api', Alarms)
 app.use('/api', ExternalUsers)
+app.use('/api', Bombs_PLCRoutes)
 
 // const server = http.createServer(app)
 // app.use('/api', async (req, res, next) => {
