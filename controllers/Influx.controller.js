@@ -445,6 +445,7 @@ async function InfluxChart(req, res) {
 //funcion para consultar multiples variables y obtener un objeto con el valor de cada una
 async function getMultipleSimpleValues(req, res) {
     try {
+        const db = req.db
         const { user = false } = req
         if (!user?.influx_name) throw new Error('Tenes que estar logeado')
 
@@ -453,7 +454,7 @@ async function getMultipleSimpleValues(req, res) {
 
         for (const item of dataInflux) {
             const influxVar = item.dataInflux
-            const valueInflux = await getSimpleInfluxData(influxVar, user)
+            const valueInflux = await getSimpleInfluxData(influxVar, user, db)
             let finalValue = 0;
 
             // SI ES BINARIO COMPRIMIDO Y VIENEN BITS
