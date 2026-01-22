@@ -1,4 +1,3 @@
-const { db } = require('../models')
 /**
  * Migra las tablas proporcionadas a la base de datos, creando nuevas entradas si no existen
  * o actualizando las existentes.
@@ -9,7 +8,7 @@ const { db } = require('../models')
  * @author Jose Romani <jose.romani@hotmail.com>
  *
  */
-const getIdTable = async (TableName) => {
+const getIdTable = async (TableName, db) => {
 	try {
 		const Table = await db.Table.findOne({ where: { name: TableName } })
 		return Table
@@ -28,7 +27,7 @@ const getIdTable = async (TableName) => {
  * @author Jose Romani <jose.romani@hotmail.com>
  *
  */
-const getIdColumn = async (table_id, column_name) => {
+const getIdColumn = async (table_id, column_name, db) => {
 	try {
 		const Column = await db.ColumnsTable.findOne({ where: { name: column_name, id_table: table_id } })
 		return Column
@@ -47,7 +46,7 @@ const getIdColumn = async (table_id, column_name) => {
  * @author Jose Romani <jose.romani@hotmail.com>
  *
  */
-const saveColumnUser = async (Columns) => {
+const saveColumnUser = async (Columns, db) => {
 	return db.sequelize.transaction(async (t) => {
 		try {
 			const savedColumns = []
@@ -79,7 +78,7 @@ const saveColumnUser = async (Columns) => {
  * @author Jose Romani <jose.romani@hotmail.com>
  *
  */
-const getColumnsUser = async (id_table, id_user) => {
+const getColumnsUser = async (id_table, id_user, db) => {
 	try {
 		const Columns = await db.User_Column.findAll({
 			where: { id_user: id_user },

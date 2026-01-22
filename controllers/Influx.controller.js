@@ -9,7 +9,6 @@ const {
     generateQueryHistorical,
 } = require('../utils/js/queryBuilder')
 const { mapBitsToBombs } = require('../utils/js/binaryDecompressor');
-const { db } = require('../models')
 
 async function InfluxConection(req, res) {
     try {
@@ -24,10 +23,10 @@ async function InfluxConection(req, res) {
     }
 }
 
-async function getSimpleInfluxData(influxVar, user) {
+async function getSimpleInfluxData(influxVar, user, db) {
     const { influx_name = false } = user
     if (!influx_name) throw new Error('Tenes que estar logeado para hacer esta consulta')
-
+    
     // Si la variable es calculada
     if (influxVar?.calc) {
         const results = await Promise.all(
@@ -424,6 +423,7 @@ async function getHistorcalInfluxData(influxVar, user) {
 async function InfluxChart(req, res) {
     try {
         const influxVar = req.body
+        const db = req.db
         const { user = false } = req
         if (!user) {
             throw new Error('Tenes que estar logeado para hacer esta consulta')
@@ -434,7 +434,7 @@ async function InfluxChart(req, res) {
             return res.status(200).json(historyData)
         }
 
-        const simpleData = await getSimpleInfluxData(influxVar, user)
+        const simpleData = await getSimpleInfluxData(influxVar, user, db)
 
         return res.status(200).json(simpleData)
     } catch (error) {

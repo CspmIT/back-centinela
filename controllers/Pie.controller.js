@@ -29,7 +29,8 @@ const createPieChart = async (req, res) => {
 
         const saveChartData = await ChartService.createPieChart(
             chart,
-            chartData
+            chartData,
+            req.db
         )
 
         return res.status(201).json({

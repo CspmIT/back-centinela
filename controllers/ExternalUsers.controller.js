@@ -2,11 +2,11 @@ const {
     getWaterAverageTax,
     graf_dif_men_osmosis
 } = require('../services/ExternalUsersService')
-const { db } = require('../models')
 
 const waterAverageTax = async (req, res) => {
     try {
         const { influx_name, name_coop } = req.user
+        const db = req.db
         const user = { influx_name, db, name_coop }
        
         const data = await getWaterAverageTax(user)
@@ -20,6 +20,7 @@ const waterAverageTax = async (req, res) => {
 const getGrafDifMenOsmosis = async (req, res) => {
     try {
         const { influx_name, name_coop } = req.user
+        const db = req.db
         const user = { influx_name, db, name_coop }
        
         const data = await graf_dif_men_osmosis(user)

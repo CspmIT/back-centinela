@@ -9,9 +9,8 @@ const {
   saveImageData,
 } = require('../services/DiagramService')
 
-const { db } = require('../models')
-
 const saveDiagram = async (req, res) => {
+  const db = req.db;
   let transaction;
   try {
     transaction = await db.sequelize.transaction();
@@ -27,7 +26,7 @@ const saveDiagram = async (req, res) => {
 
     if (!diagram) throw new Error('Faltan los datos del Diagrama');
 
-    const diagramDb = await saveInfoDiagram(diagram, transaction);
+    const diagramDb = await saveInfoDiagram(diagram, transaction, db);
 
     if (deleted) {
       const {
@@ -56,7 +55,7 @@ const saveDiagram = async (req, res) => {
     if (images.length) {
       await Promise.all(
         images.map(async (image) => {
-          const img = await saveImageDiagram(image, transaction, diagramDb.id);
+          const img = await saveImageDiagram(image, transaction, diagramDb.id, db);
 
           await db.DiagramImageData.destroy({
             where: { id_image: img.id },
@@ -76,7 +75,7 @@ const saveDiagram = async (req, res) => {
           }));
 
           await Promise.all(
-            variables.map((variable) => saveImageData(variable, transaction))
+            variables.map((variable) => saveImageData(variable, transaction, db))
           );
         })
       );
@@ -85,7 +84,7 @@ const saveDiagram = async (req, res) => {
     if (lines.length) {
       await Promise.all(
         lines.map((line) =>
-          saveLineDiagram(line, transaction, diagramDb.id)
+          saveLineDiagram(line, transaction, diagramDb.id, db)
         )
       );
     }
@@ -93,7 +92,7 @@ const saveDiagram = async (req, res) => {
     if (polylines.length) {
       await Promise.all(
         polylines.map((polyline) =>
-          savePolylineDiagram(polyline, transaction, diagramDb.id)
+          savePolylineDiagram(polyline, transaction, diagramDb.id, db)
         )
       );
     }
@@ -101,7 +100,7 @@ const saveDiagram = async (req, res) => {
     if (texts.length) {
       await Promise.all(
         texts.map((text) =>
-          saveTextDiagram(text, transaction, diagramDb.id)
+          saveTextDiagram(text, transaction, diagramDb.id, db)
         )
       );
     }
@@ -130,7 +129,7 @@ const saveDiagram = async (req, res) => {
 
 const getDiagrams = async (req, res) => {
   try {
-    const listDiagras = await listDiagram()
+    const listDiagras = await listDiagram(req.db)
     return res.status(200).json(listDiagras)
   } catch (error) {
     if (error.errors) {
@@ -146,7 +145,7 @@ const getObjectCanva = async (req, res) => {
     const { id } = req.query
     if (!id) throw new Error('Se debe pasar un ID')
 
-    const listObject = await ObjectsDiagram(id)
+    const listObject = await ObjectsDiagram(id, req.db)
     return res.status(200).json(listObject)
   } catch (error) {
     if (error.errors) {
@@ -160,6 +159,7 @@ const getObjectCanva = async (req, res) => {
 const changeStatusDiagram = async (req, res) => {
   try {
     const { id, status } = req.body;
+    const db = req.db;
 
     if (typeof id === 'undefined' || typeof status === 'undefined') {
       return res.status(400).json({ error: 'Faltan parámetros requeridos' });

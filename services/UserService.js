@@ -1,6 +1,4 @@
 const { Op } = require('sequelize')
-const { db } = require('../models')
-
 /**
  * Obtiene todos los usuarios activos de la base de datos.
  * Se consideran activos aquellos usuarios cuyo `status` sea igual a 1.
@@ -9,7 +7,7 @@ const { db } = require('../models')
  * @throws {Error} Si ocurre algún problema durante la consulta.
  * @author [José Romani] <jose.romani@hotmail.com>
  */
-const getAllUser = async () => {
+const getAllUser = async (db) => {
 	try {
 		const listUser = await db.User.findAll({ where: { status: 1 } })
 		return listUser
@@ -26,7 +24,7 @@ const getAllUser = async () => {
  * @throws {Error} Si ocurre algún problema durante la consulta o la inclusión de las asociaciones.
  * @author [José Romani] <jose.romani@hotmail.com>
  */
-const getAllProfile = async () => {
+const getAllProfile = async (db) => {
 	try {
 		const listProfiles = await db.Profile.findAll()
 		return listProfiles
@@ -43,7 +41,7 @@ const getAllProfile = async () => {
  * @throws {Error} Si ocurre algún problema durante la consulta o la inclusión de las asociaciones.
  * @author [José Romani] <jose.romani@hotmail.com>
  */
-const getAllUserPass = async () => {
+const getAllUserPass = async (db) => {
 	try {
 		const listUser = await db.User.findAll({
 			where: { status: 1 },
