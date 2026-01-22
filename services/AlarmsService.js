@@ -1,8 +1,7 @@
-const { db } = require('../models')
 const { createAlarmLog } = require('./LogsAlarmsService')
 const { getSimpleInfluxData, getHistorcalInfluxData } = require('../controllers/Influx.controller')
 
-const listAlarms = async () => {
+const listAlarms = async (db) => {
 	try {
 		const alarms = await db.Alarms.findAll({
 			include: [
@@ -25,8 +24,7 @@ const listAlarms = async () => {
 	}
 }
 
-const postAlarm = async (data) => {
-	console.log(data)
+const postAlarm = async (data, db) => {
 	try {
 		const newAlarm = await db.Alarms.create(data)
 		return newAlarm
@@ -35,7 +33,7 @@ const postAlarm = async (data) => {
 	}
 }
 
-const updateAlarm = async (id, data) => {
+const updateAlarm = async (id, data, db) => {
 	try {
 		const [updatedRows] = await db.Alarms.update(data, {
 			where: { id },
@@ -50,7 +48,7 @@ const updateAlarm = async (id, data) => {
 	}
 }
 
-const changeStatusAlarm = async (id, status) => {
+const changeStatusAlarm = async (id, status, db) => {
 	try {
 		const [updatedRows] = await db.Alarms.update(
 			{ status: !status },
@@ -227,7 +225,7 @@ const alarmsChecked = async (user) => {
 	}
 }
 
-const listLogs_Alarms = async () => {
+const listLogs_Alarms = async (db) => {
 	try {
 		const Logs_Alarms = await db.Logs_Alarms.findAll({
 			order: [['triggeredAt', 'DESC']],
@@ -257,7 +255,7 @@ const listLogs_Alarms = async () => {
 	}
 }
 
-const changeViewedAlarm = async (id) => {
+const changeViewedAlarm = async (id, db) => {
 	if (id) {
 		const alert = await db.Logs_Alarms.findByPk(id);
 		if (!alert) throw new Error('Alerta no encontrada');
@@ -272,7 +270,7 @@ const changeViewedAlarm = async (id) => {
 	}
 };
 
-const listLogs_Cronjob = async () => {
+const listLogs_Cronjob = async (db) => {
 	try {
 		const Logs_Cronjob = await db.Logs_Cronjob.findAll({
 			order: [['createdAt', 'DESC']],

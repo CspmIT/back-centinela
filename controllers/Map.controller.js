@@ -18,7 +18,7 @@ const createMap = async (req, res) => {
         }
 
         const { newMap, markersData } = await MapService.createMap(
-            validMap.data
+            validMap.data, req.db
         )
         return res.status(200).json({ newMap, markersData })
     } catch (error) {
@@ -49,7 +49,8 @@ const editMap = async (req, res) => {
         }
         const { updatedMap, markersData } = await MapService.editMap(
             id,
-            validMap.data
+            validMap.data,
+            req.db
         )
         return res.status(200).json({ updatedMap, markersData })
     } catch (error) {
@@ -67,7 +68,7 @@ const getMaps = async (req, res) => {
                 .json({ message: 'Debe estar logeado para hacer esta accion.' })
         }
 
-        const maps = await MapService.getAll()
+        const maps = await MapService.getAll(req.db)
         return res.status(200).json(maps)
     } catch (error) {
         console.error(error)
@@ -88,7 +89,7 @@ const getMapById = async (req, res) => {
                 .status(403)
                 .json({ message: 'Debe estar logeado para hacer esta accion.' })
         }
-        const resolvedMap = await MapService.searchById(id)
+        const resolvedMap = await MapService.searchById(id, req.db)
         return res.status(200).json(resolvedMap)
     } catch (error) {
         console.error(error)

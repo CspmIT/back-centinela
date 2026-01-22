@@ -1,7 +1,7 @@
-const { db, changeSchema } = require('../models')
+const { getTenantDb } = require('../models')
 
 const addUserCooptech = async (data) => {
-	await changeSchema(data.schema_name)
+	const db = await getTenantDb(data.schema_name)
 	return db.sequelize.transaction(async (t) => {
 		try {
 			const dataUser = {

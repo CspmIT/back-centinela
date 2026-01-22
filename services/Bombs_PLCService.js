@@ -1,9 +1,8 @@
 const axios = require('axios')
-const { db } = require('../models')
 const { ConsultaInflux } = require('./InfluxServices.js')
 
 //FUNCION PARA OBTENER INFORMACION DE SUCCION, BOMBAS Y SU ESTADO ACTUAL
-const getBombs_PLC = async (influx_name) => {
+const getBombs_PLC = async (influx_name, db) => {
   try {
     const [bombs, dataBombeo] = await Promise.all([
       db.Bombs_PLC.findAll({
@@ -138,11 +137,20 @@ const getInfoSuccion = async (influx_name) => {
 
 const getActualModeFromInfoSuccion = (bombName, infoSuccion) => {
   if (!infoSuccion) return 'Sin datos'
-  const bombCode = bombName
-    .replace('Bomba', '')
-    .replace(/\s+/g, '')
-    .padStart(3, 'B0')
 
+  // Extraer número de bomba
+  const bombNumber = Number(
+    bombName.replace('Bomba', '').trim()
+  )
+
+  // A partir de Bomba 21 → Sin datos
+  if (Number.isNaN(bombNumber) || bombNumber > 20) {
+    return 'Sin datos'
+  }
+
+  const bombCode = bombNumber
+    .toString()
+    .padStart(3, 'B0')
   const { AcM = '', FuS = '' } = infoSuccion
 
   if (AcM.includes(`-${bombCode}`)) {
@@ -156,7 +164,8 @@ const getActualModeFromInfoSuccion = (bombName, infoSuccion) => {
   return 'Automático'
 }
 
-const readBombPLC = async (bombId) => {
+
+const readBombPLC = async (bombId, db) => {
   const action = await db.Bombs_PLC_actions.findOne({
     where: {
       id_bombs_PLC: bombId,
@@ -178,7 +187,7 @@ const readBombPLC = async (bombId) => {
   }
 }
 
-const postBombs_PLC = async (payload) => {
+const postBombs_PLC = async (payload, db) => {
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -220,68 +229,90 @@ const postBombs_PLC = async (payload) => {
   }
 };
 
-const executeBombAction = async ({ bombId, actionId, userId }) => {
+const callPLC = async (payload) => {
   try {
-    const bomb = await db.Bombs_PLC.findByPk(bombId);
-    if (!bomb) {
-      throw new Error('Bomba no encontrada');
-    }
-
-    const action = await db.Bombs_PLC_actions.findOne({
-      where: {
-        id: actionId,
-        id_bombs_PLC: bombId
-      }
-    });
-
-    if (!action) {
-      throw new Error('Acción no encontrada para esta bomba');
-    }
-
-    const payload = JSON.stringify({
-      IP: String(bomb.IP_PLC),
-      rack: bomb.rack,
-      slot: bomb.slot,
-      comando: String(action.comando),
-      DB_ID: bomb.DB_ID,
-      variable: bomb.variable,
-      estado: action.estado,
-    })
-    console.log(payload)
-
     const response = await axios.post(
       'http://192.168.0.62:3000/S7_1200/',
       // 'http://172.26.5.40/S7:1200/' url para conexion desde kubernetes
       payload,
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      },
-    );
+      { headers: { 'Content-Type': 'aplication/json' } }
+    )
+    console.log('callPLC response:', response.data)
+    return response.data
+  } catch (error) {
+    if (error.response) {
+      console.error('PLC error body:', error.response.data)
+    }
+    throw error
+  }
+}
 
-    await db.Bombs_PLC_action_logs.create({
-      bomb_id: bombId,
-      action_id: actionId,
-      user_id: userId,
-    });
+const executeBombAction = async ({ bombId, actionId, userId, db }) => {
+  try {
+    const bomb = await db.Bombs_PLC.findByPk(bombId)
+    if (!bomb) throw new Error('Bomba no encontrada')
+
+    const action = await db.Bombs_PLC_actions.findOne({
+      where: { id: actionId, id_bombs_PLC: bombId }
+    })
+    if (!action) throw new Error('Acción no encontrada para esta bomba')
+
+    const actionPayload = {
+      IP: bomb.IP_PLC,
+      rack: bomb.rack,
+      slot: bomb.slot,
+      comando: action.comando,
+      DB_ID: bomb.DB_ID,
+      variable: bomb.variable,
+      estado: action.estado,
+    }
+    const actionResponse = await callPLC(actionPayload)
+
+    if (action.comando !== 'leer') {
+      await db.PLC_action_logs.create({
+        bomb_id: bombId,
+        action_id: actionId,
+        user_id: userId,
+      })
+    }
+
+    let readResponse = null
+
+    if (action.comando !== 'leer') {
+      const readAction = await db.Bombs_PLC_actions.findOne({
+        where: { id_bombs_PLC: bombId, comando: 'leer' }
+      })
+
+      if (readAction) {
+        const readPayload = {
+          IP: bomb.IP_PLC,
+          rack: bomb.rack,
+          slot: bomb.slot,
+          comando: 'leer',
+          DB_ID: bomb.DB_ID,
+          variable: readAction.variable,
+          estado: readAction.estado,
+        }
+        readResponse = await callPLC(readPayload)
+      }
+    }
 
     return {
       bomb: bomb.name,
       action: action.name,
-      plcResponse: response.data
-    };
+      actionResponse,
+      readResponse,
+    }
 
   } catch (error) {
     console.error('Error PLC:', {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-    });
-
-    throw error;
+    })
+    throw error
   }
-};
+}
 
 module.exports = {
   getBombs_PLC,

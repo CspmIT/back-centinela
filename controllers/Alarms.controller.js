@@ -8,12 +8,12 @@ const {
   changeViewedAlarm,
   listLogs_Cronjob
 } = require('../services/AlarmsService')
-const { createDbForSchema, db } = require('../models')
+const { createDbForSchema } = require('../models')
 const { listClients, influxByClient } = require('../utils/js/clients')
 
 const getAlarms = async (req, res) => {
   try {
-    const Alarms = await listAlarms();
+    const Alarms = await listAlarms(req.db);
     return res.status(200).json(Alarms)
   } catch (error) {
     if (error.errors) {
@@ -26,7 +26,7 @@ const getAlarms = async (req, res) => {
 
 const addAlarms = async (req, res) => {
   try {
-    const newAlarm = await postAlarm(req.body);
+    const newAlarm = await postAlarm(req.body, req.db);
     return res.status(200).json(newAlarm)
   } catch (error) {
     if (error.errors) {
@@ -40,7 +40,7 @@ const addAlarms = async (req, res) => {
 const editAlarm = async (req, res) => {
   try {
     const { id } = req.params
-    const updatedAlarm = await updateAlarm(id, req.body)
+    const updatedAlarm = await updateAlarm(id, req.body, req.db)
     return res.status(200).json(updatedAlarm)
   } catch (error) {
     if (error.errors) {
@@ -56,7 +56,7 @@ const toggleAlarmStatus = async (req, res) => {
     const { id } = req.body
     const { status } = req.body
 
-    const updatedAlarm = await changeStatusAlarm(id, status)
+    const updatedAlarm = await changeStatusAlarm(id, status, req.db)
     return res.status(200).json(updatedAlarm)
   } catch (error) {
     if (error.errors) {
@@ -100,7 +100,7 @@ const publicCheckAlarms = async (req, res) => {
           continue
         }
 
-        const localDb = createDbForSchema(schema)
+        const localDb = await createDbForSchema(schema)
         const user = { influx_name, db: localDb }
         const result = await alarmsChecked(user)
 
@@ -121,7 +121,7 @@ const publicCheckAlarms = async (req, res) => {
 
 const getLog_Alarms = async (req, res) => {
   try {
-    const Logs_Alarms = await listLogs_Alarms();
+    const Logs_Alarms = await listLogs_Alarms(req.db);
     return res.status(200).json(Logs_Alarms)
   } catch (error) {
     if (error.errors) {
@@ -135,7 +135,7 @@ const getLog_Alarms = async (req, res) => {
 const markAlertAsViewed = async (req, res) => {
   try {
     const { id } = req.params
-    const updatedAlarm = await changeViewedAlarm(id)
+    const updatedAlarm = await changeViewedAlarm(id, req.db)
     return res.status(200).json(updatedAlarm)
   } catch (error) {
     if (error.errors) {
@@ -147,6 +147,7 @@ const markAlertAsViewed = async (req, res) => {
 }
 
 const getUnreadAlertCount = async (req, res) => {
+  const db = req.db
   try {
     const count = await db.Logs_Alarms.count({
       where: { viewed: 0 }
@@ -160,7 +161,7 @@ const getUnreadAlertCount = async (req, res) => {
 
 const getLog_Cronjob = async (req, res) => {
   try {
-    const logs = await listLogs_Cronjob();
+    const logs = await listLogs_Cronjob(req.db);
     return res.status(200).json(logs)
   } catch (error) {
     if (error.errors) {

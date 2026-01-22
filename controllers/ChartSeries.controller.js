@@ -51,7 +51,8 @@ const addSeriesChart = async (req, res) => {
         const savedChart = await ChartService.createSeriesChart(
             chart,
             chartConfig,
-            chartSeriesData
+            chartSeriesData,
+            req.db
         )
         res.status(200).json(savedChart)
     } catch (error) {
@@ -78,7 +79,8 @@ const updateSeriesChart = async (req, res) => {
             id,
             chart,
             chartConfig,
-            chartSeriesData
+            chartSeriesData,
+            req.db
         )
         res.status(200).json(savedChart)
     } catch (error) {

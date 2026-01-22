@@ -1,5 +1,4 @@
 const { where } = require('sequelize')
-const { db } = require('../models')
 
 /**
  * Guarda la informacion pertenecientes a un diagrama.
@@ -12,6 +11,7 @@ const { db } = require('../models')
  * @author Jose Romani <jose.romani@hotmail.com>
  */
 const saveVariableInflux = async (data) => {
+    const db = data.db
     const transaction = await db.sequelize.transaction()
     try {
         const [InfluxVar, created] = await db.InfluxVar.findOrCreate({
@@ -40,7 +40,7 @@ const saveVariableInflux = async (data) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const getVariables = async () => {
+const getVariables = async (db) => {
     try {
         const list = await db.InfluxVar.findAll({ where: { status: 1 }, include: [{ model: db.VarsBinaryCompressedData, as: 'bits', required: false }] })
         return list
@@ -49,7 +49,7 @@ const getVariables = async () => {
     }
 }
 
-const getVarById = async (id) => {
+const getVarById = async (id, db) => {
     const varSaved = await db.InfluxVar.findOne({
         where: { id },
         include: [{ model: db.VarsBinaryCompressedData, as: 'bits', required: false }]
@@ -57,7 +57,7 @@ const getVarById = async (id) => {
     return varSaved;
 };
 
-const handleStatusInfluxVar = async (id) => {
+const handleStatusInfluxVar = async (id, db) => {
     try {
         const [influxVar] = await db.InfluxVar.findAll({ where: { id: id } })
         const currentStatus = influxVar.status
@@ -77,7 +77,7 @@ const handleStatusInfluxVar = async (id) => {
  * @param {Array} bits - array de bits con forma [{ id?, name, bit }]
  * @param {Object} options - { transaction }
  */
-async function saveBitsData(variableId, bits, options = {}) {
+async function saveBitsData(variableId, bits, options = {}, db) {
     const { transaction = null } = options;
 
     if (!Array.isArray(bits) || bits.length === 0) {

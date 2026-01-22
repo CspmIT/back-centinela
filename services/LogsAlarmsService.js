@@ -58,11 +58,11 @@ const createAlarmLog = async (db, alarm, currentValue, secondaryValue) => {
 
     console.log('Log creado:', message, ', en base de datos:', db.sequelize.config.database)
 
-    try {
-      await discord(db, message)
-    } catch (err) {
-      console.error('No se pudo notificar a Discord:', err.message)
-    }
+    // try {
+    //   await discord(db, message)
+    // } catch (err) {
+    //   console.error('No se pudo notificar a Discord:', err.message)
+    // }
     registro = log.message
     return registro
 
@@ -75,7 +75,7 @@ const createAlarmLog = async (db, alarm, currentValue, secondaryValue) => {
 const discordCredentials = async (db) => {
   try {
     const credentials = await db.Discord.findOne({ where: { id: 1 } })
-    return credentials
+    return credentialslocal
   } catch (e) {
     throw e
   }

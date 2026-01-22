@@ -4,8 +4,6 @@ const {
   postBombs_PLC,
   executeBombAction
 } = require('../services/Bombs_PLCService')
-const { db } = require('../models')
-
 
 const listBombsPLC = async (req, res) => {
   const { influx_name = false } = req.user
@@ -13,7 +11,7 @@ const listBombsPLC = async (req, res) => {
     if (!influx_name) {
       return res.status(401).json('Tenes que estar logeado para hacer esta consulta')
     }
-    const BombsPLC = await getBombs_PLC(influx_name);
+    const BombsPLC = await getBombs_PLC(influx_name, req.db);
     return res.status(200).json(BombsPLC)
   } catch (error) {
     if (error.errors) {
@@ -46,7 +44,7 @@ const getBombeoStatus = async (req, res) => {
 
 const addBombs_PLC = async (req, res) => {
   try {
-    const newBomb_PLC = await postBombs_PLC(req.body);
+    const newBomb_PLC = await postBombs_PLC(req.body, req.db);
     return res.status(200).json(newBomb_PLC)
   } catch (error) {
     if (error.errors) {
@@ -61,11 +59,13 @@ const executeBomb = async (req, res) => {
   try {
     const { bombId, actionId } = req.body
     const userId = req.user.id
+    const db = req.db
 
     const result = await executeBombAction({
       bombId,
       actionId,
-      userId
+      userId,
+      db
     })
     return res.status(200).json(result);
   } catch (error) {
