@@ -1,8 +1,7 @@
 const { Op, literal } = require('sequelize')
-const { db } = require('../models')
 
 class ChartService {
-    static async getSimpleCharts() {
+    static async getSimpleCharts(db) {
         try {
             const charts = await db.Chart.findAll({
                 where: {
@@ -42,7 +41,7 @@ class ChartService {
         }
     }
 
-    static async getDashboardCharts() {
+    static async getDashboardCharts(db) {
         try {
             const charts = await db.Chart.findAll({
                 where: {
@@ -82,7 +81,7 @@ class ChartService {
         }
     }
 
-    static async getChartById(id) {
+    static async getChartById(id, db) {
         const chart = await db.Chart.findAll({
             where: { id: id },
             include: [
@@ -113,7 +112,7 @@ class ChartService {
         return chart.shift()
     }
 
-    static async getAllCharts() {
+    static async getAllCharts(db) {
         try {
             const charts = await db.Chart.findAll()
             return charts
@@ -129,7 +128,7 @@ class ChartService {
      * @param {object[]} chartData - ChartData object
      * @returns {Promise<object>} - Created chart
      */
-    static async createChart(chart, chartConfig, chartData) {
+    static async createChart(chart, chartConfig, chartData, db) {
         const t = await db.sequelize.transaction()
         try {
             const newChart = await db.Chart.create(chart, { transaction: t })
@@ -153,7 +152,7 @@ class ChartService {
         }
     }
 
-    static async updateChart(chartId, chart, chartConfig, chartData) {
+    static async updateChart(chartId, chart, chartConfig, chartData, db) {
         const t = await db.sequelize.transaction()
         try {
             // Actualizar el gráfico principal
@@ -194,7 +193,7 @@ class ChartService {
         }
     }
 
-    static async createSeriesChart(chart, chartConfig, chartSeriesData) {
+    static async createSeriesChart(chart, chartConfig, chartSeriesData, db) {
         const t = await db.sequelize.transaction()
         try {
             const newChart = await db.Chart.create(chart, { transaction: t })
@@ -219,7 +218,7 @@ class ChartService {
         }
     }
 
-    static async editSeriesChart(chartId, chart, chartConfig, chartSeriesData) {
+    static async editSeriesChart(chartId, chart, chartConfig, chartSeriesData, db) {
         const t = await db.sequelize.transaction()
         try {
             // Actualizar el gráfico principal
@@ -262,7 +261,7 @@ class ChartService {
         }
     }
 
-    static async createPieChart(chart, chartPieData) {
+    static async createPieChart(chart, chartPieData, db) {
         const t = await db.sequelize.transaction()
         try {
             const newChart = await db.Chart.create(chart, { transaction: t })
@@ -282,7 +281,7 @@ class ChartService {
         }
     }
 
-    static async createBombs(chart, chartConfig, bombsData) {
+    static async createBombs(chart, chartConfig, bombsData, db) {
         const t = await db.sequelize.transaction()
         try {
             const newChart = await db.Chart.create(chart, { transaction: t })
@@ -306,7 +305,7 @@ class ChartService {
         }
     }
 
-    static async changeStatus(id, status) {
+    static async changeStatus(id, status, db) {
         try {
             const chartUpdated = await db.Chart.update(
                 { status },

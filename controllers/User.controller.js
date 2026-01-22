@@ -13,7 +13,7 @@ const {
 
 async function getListUser(req, res) {
     try {
-        const listUser = await getAllUser()
+        const listUser = await getAllUser(req.db)
         return res.status(200).json(listUser)
     } catch (error) {
         if (error.errors) {
@@ -26,7 +26,7 @@ async function getListUser(req, res) {
 
 async function getProfiles(req, res) {
     try {
-        const listProfile = await getAllProfile()
+        const listProfile = await getAllProfile(req.db)
         return res.status(200).json(listProfile)
     } catch (error) {
         if (error.errors) {
@@ -39,20 +39,7 @@ async function getProfiles(req, res) {
 
 async function getAllMenu(req, res) {
     try {
-        const menus = await getMenus()
-        return res.status(200).json(menus)
-    } catch (error) {
-        if (error.errors) {
-            res.status(500).json(error.errors)
-        } else {
-            res.status(400).json(error.message)
-        }
-    }
-}
-
-async function getAllMenu(req, res) {
-    try {
-        const menus = await getMenus()
+        const menus = await getMenus(req.db)
         return res.status(200).json(menus)
     } catch (error) {
         if (error.errors) {
@@ -66,6 +53,7 @@ async function getAllMenu(req, res) {
 async function abmMenu(req, res) {
     let transaction
     try {
+        db = req.db
         // Inicia la transacción
         transaction = await db.sequelize.transaction()
         // Validaciones previas
@@ -74,7 +62,7 @@ async function abmMenu(req, res) {
                 .status(400)
                 .json({ message: 'Se solicita completar todos los campos.' })
         }
-        const Menu = await saveMenu(req.body, transaction)
+        const Menu = await saveMenu(req.body, transaction, req.db)
         if (!Menu) throw new Error('Error al guardar la contraseña.')
         // Si todo está bien, se confirma la transacción
         await transaction.commit()
@@ -93,6 +81,7 @@ async function abmMenu(req, res) {
 async function deleteMenu(req, res) {
     let transaction
     try {
+        const db = req.db
         // Inicia la transacción
         transaction = await db.sequelize.transaction()
         let Menu = true
@@ -123,7 +112,7 @@ async function deleteMenu(req, res) {
 
 async function getListUserPass(req, res) {
     try {
-        const listUser = await getAllUserPass()
+        const listUser = await getAllUserPass(req.db)
 
         return res.status(200).json(listUser)
     } catch (error) {
@@ -141,7 +130,7 @@ async function getPermission(req, res) {
             return res
                 .status(400)
                 .json({ message: 'Se solicita completar todos los campos.' })
-        const menus = await listPermissionUser(req.query)
+        const menus = await listPermissionUser(req.query, req.db)
         return res.status(200).json(menus)
     } catch (error) {
         if (error.errors) {
@@ -155,6 +144,7 @@ async function getPermission(req, res) {
 async function savePermission(req, res) {
     let transaction
     try {
+        const db = req.db
         // Inicia la transacción
         transaction = await db.sequelize.transaction()
         let Menu_selected = true
@@ -165,7 +155,7 @@ async function savePermission(req, res) {
                     message: 'Se solicita enviar el identificador del menu.',
                 })
             }
-            Menu_selected = await saveMenu_Selected(element, transaction)
+            Menu_selected = await saveMenu_Selected(element, transaction, req.db)
             if (!Menu_selected)
                 throw new Error('Error al guardar la contraseña.')
         }

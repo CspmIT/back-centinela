@@ -5,6 +5,7 @@ const { ChartService } = require('../services/ChartService')
 const create = async (req, res) => {
     try {
         const baseBomb = req.body
+        const db = req.db
         baseBomb.type = 'PumpControl'
 
         const validBomb = BaseBomb.parse(baseBomb)
@@ -30,7 +31,8 @@ const create = async (req, res) => {
         const newChart = await ChartService.createBombs(
             chart,
             chartConfig,
-            bombsData
+            bombsData,
+            db
         )
         //Retorno los datos
         res.status(201).json(newChart)

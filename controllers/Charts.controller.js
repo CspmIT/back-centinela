@@ -9,7 +9,7 @@ const ChartBuilder = require('../utils/js/chartBuilder')
 
 const findIndicatorCharts = async (req, res) => {
     try {
-        const charts = await ChartService.getSimpleCharts()
+        const charts = await ChartService.getSimpleCharts(req.db)
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -18,7 +18,7 @@ const findIndicatorCharts = async (req, res) => {
 
 const findDashboardCharts = async (req, res) => {
     try {
-        const charts = await ChartService.getDashboardCharts()
+        const charts = await ChartService.getDashboardCharts(req.db)
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -28,7 +28,8 @@ const findDashboardCharts = async (req, res) => {
 const findChartById = async (req, res) => {
     try {
         const { id } = req.params
-        const chart = await ChartService.getChartById(id)
+        const db = req.db
+        const chart = await ChartService.getChartById(id, db)
         if (!chart) {
             throw new Error('No se encontro ningun grafico')
         }
@@ -40,7 +41,7 @@ const findChartById = async (req, res) => {
 
 const findAllCharts = async (req, res) => {
     try {
-        const charts = await ChartService.getAllCharts()
+        const charts = await ChartService.getAllCharts(req.db)
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -69,7 +70,7 @@ const createChart = async (req, res) => {
         const chartBuilder = new ChartBuilder(autorizedConfigKeys, filteredKeys)
 
         const { chart, config, data } = chartBuilder.build(baseChart)
-        const newChart = await ChartService.createChart(chart, config, data)
+        const newChart = await ChartService.createChart(chart, config, data, req.db)
 
         res.status(201).json({ newChart })
     } catch (error) {
@@ -110,7 +111,8 @@ const editChart = async (req, res) => {
             chartId,
             chart,
             config,
-            data
+            data,
+            req.db
         )
 
         res.status(200).json({ updatedChart: updatedChartData })
@@ -153,7 +155,7 @@ const statusChart = async (req, res) => {
         // Actualizo el estado al opuesto
         const newStatus = status ? 0 : 1
 
-        const chartUpdated = await ChartService.changeStatus(id, newStatus)
+        const chartUpdated = await ChartService.changeStatus(id, newStatus, req.db)
 
         res.status(200).json(chartUpdated)
     } catch (error) {

@@ -1,6 +1,5 @@
-const { db } = require('../models')
 class MapService {
-    static async searchById(id) {
+    static async searchById(id, db) {
         try {
             const mapa = await db.Maps.findAll({
                 where: { id: id },
@@ -22,7 +21,7 @@ class MapService {
         }
     }
 
-    static async getAll() {
+    static async getAll(db) {
         try {
             const maps = await db.Maps.findAll({})
             return maps
@@ -31,7 +30,7 @@ class MapService {
         }
     }
 
-    static async createMap(map) {
+    static async createMap(map, db) {
         console.log(map)
         const t = await db.sequelize.transaction()
         const {name, viewState, markers } = map
@@ -70,7 +69,7 @@ class MapService {
         }
     }
 
-    static async editMap(id, map) {
+    static async editMap(id, map, db) {
         const t = await db.sequelize.transaction()
         
         const {name, viewState, markers } = map

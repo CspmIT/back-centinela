@@ -37,8 +37,8 @@ plc_points_end`
     const varsSection = `
 vars_start
 ${data.vars
-    .map((v) => `${v.byte},${v.bit},"${v.type.toLowerCase()}","${v.field}"`)
-    .join('\n')}
+            .map((v) => `${v.byte},${v.bit},"${v.type.toLowerCase()}","${v.field}"`)
+            .join('\n')}
 vars_end`
 
     return `${configSection}\n${pointsSection}\n${varsSection}`
@@ -154,7 +154,8 @@ const createPLCProfile = async (req, res) => {
 
         // Guardar en base de datos
         const { newPLCProfile, pointsData, varsData } = await PLCService.save(
-            plcProfile.data
+            plcProfile.data,
+            req.db
         )
 
         // Borro los archivos locales
@@ -184,7 +185,7 @@ const editPLCProfile = async (req, res) => {
         return res.status(400).json({ message: plcProfile.error.errors })
     }
 
-    const plcToUpdate = await PLCService.searchByID(plcProfile.data.id)
+    const plcToUpdate = await PLCService.searchByID(plcProfile.data.id, req.db)
     if (plcToUpdate[0].status === 2) {
         plcProfile.data.status = 0
     }
@@ -204,7 +205,8 @@ const editPLCProfile = async (req, res) => {
 
         // Guardar en base de datos
         const { newPLCProfile, pointsData, varsData } = await PLCService.update(
-            plcProfile.data
+            plcProfile.data,
+            req.db
         )
 
         // Borro los archivos locales
@@ -229,7 +231,7 @@ const activatePLCProfile = async (req, res) => {
     try {
         const { id } = req.params
 
-        const profile = await PLCService.searchByID(id)
+        const profile = await PLCService.searchByID(id, req.db)
 
         if (profile[0].status !== 0) {
             const message =
@@ -258,7 +260,7 @@ const activatePLCProfile = async (req, res) => {
             })
         }
 
-        const dbUpdate = await PLCService.updateStatus(profile[0].id, 1)
+        const dbUpdate = await PLCService.updateStatus(profile[0].id, 1, req.db)
         return res.status(200).json({
             message: 'El servicio se activo correctamente.',
             sshResult: result,
@@ -277,7 +279,7 @@ const deactivatePLCProfile = async (req, res) => {
     try {
         const { id } = req.params
 
-        const profile = await PLCService.searchByID(id)
+        const profile = await PLCService.searchByID(id, req.db)
 
         if (profile[0].status !== 1) {
             return res.status(400).json({
@@ -321,7 +323,7 @@ const deleteFilePLC = async (req, res) => {
     try {
         const { id } = req.params
 
-        const profile = await PLCService.searchByID(id)
+        const profile = await PLCService.searchByID(id, req.db)
         if (profile[0].status !== 0) {
             return res.status(400).json({
                 message:
@@ -342,7 +344,7 @@ const deleteFilePLC = async (req, res) => {
                     'Ocurrio un error al eliminar los archivos del servidor',
             })
         }
-        const updatePLC = await PLCService.updateStatus(profile[0].id, 2)
+        const updatePLC = await PLCService.updateStatus(profile[0].id, 2, req.db)
         return res.status(200).json({ message: updatePLC })
     } catch (error) {
         console.error(error)
@@ -351,7 +353,7 @@ const deleteFilePLC = async (req, res) => {
 }
 
 const searchAllPLC = async (req, res) => {
-    const PLCProfiles = await PLCService.search()
+    const PLCProfiles = await PLCService.search(req.db)
     res.status(200).json(PLCProfiles)
 }
 
@@ -359,7 +361,7 @@ const searchById = async (req, res) => {
     try {
         const { id } = req.params
 
-        const profile = await PLCService.searchByID(id)
+        const profile = await PLCService.searchByID(id, req.db)
 
         return res.status(200).json(profile)
     } catch (error) {

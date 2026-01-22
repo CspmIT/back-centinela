@@ -1,8 +1,7 @@
 const { where } = require('sequelize')
-const { db } = require('../models')
 
 class PLCService {
-    static async search() {
+    static async search(db) {
         try {
             const PLCProfile = await db.PLCProfile.findAll({
                 include: [
@@ -20,7 +19,7 @@ class PLCService {
         }
     }
 
-    static async searchByID(id) {
+    static async searchByID(id, db) {
         try {
             const PLCProfile = await db.PLCProfile.findAll({
                 where: { id: id },
@@ -39,7 +38,7 @@ class PLCService {
         }
     }
 
-    static async updateStatus(profileID, newStatus) {
+    static async updateStatus(profileID, newStatus, db) {
         try {
             const plcUpdate = await db.PLCProfile.findByPk(profileID)
             if (!plcUpdate) {
@@ -53,7 +52,7 @@ class PLCService {
         }
     }
 
-    static async update(PLCProfile) {
+    static async update(PLCProfile, db) {
         const t = await db.sequelize.transaction()
         try {
             const { id, points, vars, ...plcData } = PLCProfile
@@ -114,7 +113,7 @@ class PLCService {
         }
     }
 
-    static async save(PLCProfile) {
+    static async save(PLCProfile, db) {
         const t = await db.sequelize.transaction()
         try {
             const { points, vars, ...plcData } = PLCProfile

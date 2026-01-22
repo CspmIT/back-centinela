@@ -1,6 +1,4 @@
-const { db } = require('../models')
-
-const listDiagram = async () => {
+const listDiagram = async (db) => {
 	try {
 		const Diagram = await db.Diagram.findAll()
 		return Diagram
@@ -9,7 +7,7 @@ const listDiagram = async () => {
 	}
 }
 
-const ObjectsDiagram = async (id) => {
+const ObjectsDiagram = async (id, db) => {
 	try {
 		const Diagram = await db.Diagram.findAll({
 			where: { id: id },
@@ -122,7 +120,7 @@ const ObjectsDiagram = async (id) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const saveInfoDiagram = async (diagram, transaction) => {
+const saveInfoDiagram = async (diagram, transaction, db) => {
 	try {
 		const [Diagram, created] = await db.Diagram.findOrCreate({
 			where: { id: diagram?.id || 0 },
@@ -148,7 +146,7 @@ const saveInfoDiagram = async (diagram, transaction) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const saveImageDiagram = async (image, transaction, id_diagram) => {
+const saveImageDiagram = async (image, transaction, id_diagram, db) => {
 	try {
 		// image.id = typeof image.id === 'string' ? 0 : image.id
 		image.id_diagram = id_diagram
@@ -175,7 +173,7 @@ const saveImageDiagram = async (image, transaction, id_diagram) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const saveImageData = async (variable, transaction) => {
+const saveImageData = async (variable, transaction, db) => {
 	try {
 		const [DiagramImageData, created] = await db.DiagramImageData.findOrCreate({
 			where: { id_image: variable.id_image, name_var: variable.name_var },
@@ -201,7 +199,7 @@ const saveImageData = async (variable, transaction) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const saveLineDiagram = async (line, transaction, id_diagram) => {
+const saveLineDiagram = async (line, transaction, id_diagram, db) => {
 	try {
 		line.id_diagram = id_diagram
 		line.id_influxvars = line.id_influxvars === 0 ? null : line.id_influxvars
@@ -229,7 +227,7 @@ const saveLineDiagram = async (line, transaction, id_diagram) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const savePolylineDiagram = async (polyline, transaction, id_diagram) => {
+const savePolylineDiagram = async (polyline, transaction, id_diagram, db) => {
 	try {
 		// polyline.id = typeof polyline.id === 'string' ? 0 : polyline.id
 		polyline.id_diagram = id_diagram
@@ -258,7 +256,7 @@ const savePolylineDiagram = async (polyline, transaction, id_diagram) => {
  * @throws {Error} Lanza un error si ocurre un problema durante la transacción.
  * @author Jose Romani <jose.romani@hotmail.com>
  */
-const saveTextDiagram = async (text, transaction, id_diagram) => {
+const saveTextDiagram = async (text, transaction, id_diagram, db) => {
 	try {
 		// text.id = typeof text.id === 'string' ? 0 : text.id
 		text.id_diagram = id_diagram

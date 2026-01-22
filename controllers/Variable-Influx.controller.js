@@ -5,12 +5,12 @@ const {
     handleStatusInfluxVar,
     saveBitsData
 } = require('../services/VariableInfluxServices')
-
-const { db } = require('../models')
+const { getTenantDb } = require('../models')
 
 const { isValidId } = require('../utils/isIntegerNumber')
 
 const saveVariable = async (req, res) => {
+    const db = req.db
     const t = await db.sequelize.transaction();
     try {
       const { name, unit, calc, varsInflux, binary_compressed, bits } = req.body;
@@ -20,11 +20,12 @@ const saveVariable = async (req, res) => {
   
       const variableSaved = await saveVariableInflux({
         ...req.body,
+        db,
         binary_compressed: Boolean(binary_compressed),
       });
   
       if (binary_compressed === true) {
-        await saveBitsData(variableSaved.id, bits, { transaction: t });
+        await saveBitsData(variableSaved.id, bits, { transaction: t }, db);
       }
   
       await t.commit();
@@ -42,7 +43,7 @@ const saveVariable = async (req, res) => {
 
 const listVariables = async (req, res) => {
     try {
-        const listVars = await getVariables()
+        const listVars = await getVariables(req.db)
         return res.status(200).json(listVars)
     } catch (error) {
         console.error(error)
@@ -60,7 +61,7 @@ const getVar = async (req, res) => {
         if (!id || !isValidId(id)) {
             throw new Error('El id no es valido')
         }
-        const influxVar = await getVarById(id)
+        const influxVar = await getVarById(id, req.db)
         return res.status(200).json(influxVar)
     } catch (error) {
         res.status(400).json(error.message)
@@ -75,7 +76,7 @@ const deleteVar = async (req, res) => {
             return res.status(400).json({ message: 'Id invalida' })
         }
 
-        const influxVar = await handleStatusInfluxVar(id)
+        const influxVar = await handleStatusInfluxVar(id, req.db)
         if (!influxVar) {
             return res
                 .status(400)
