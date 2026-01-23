@@ -227,8 +227,8 @@ const postBombs_PLC = async (payload, db) => {
 const callPLC = async (payload) => {
   try {
     const response = await axios.post(
-      // 'http://192.168.0.62:3000/S7_1200/',
-      'http://172.26.5.40/S7:1200/',
+      'http://192.168.0.62:3000/S7_1200/',
+      // 'http://172.26.5.40/S7:1200/',
       payload,
       { headers: { 'Content-Type': 'application/json' } }
     )
@@ -242,7 +242,7 @@ const callPLC = async (payload) => {
     return {
       success: true,
       warning: true,
-      message: 'Accion ejecutada por el PLC'
+      message: 'Accion enviada al PLC, no se recibio respuesta correcta'
     }
   }
 }
