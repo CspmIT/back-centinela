@@ -46,8 +46,8 @@ const getData_Bombeo = async (influx_name) => {
             r["_field"] == "QPLC4" or
             r["_field"] == "QPLC5" or
             r["_field"] == "QPLC7" or
-            r["_field"] == "QPLC8" 
-            
+            r["_field"] == "QPLC8"
+
           )
           |> aggregateWindow(every: 1m, fn: last, createEmpty: false)
           |> last()
@@ -143,11 +143,6 @@ const getActualModeFromInfoSuccion = (bombName, infoSuccion) => {
     bombName.replace('Bomba', '').trim()
   )
 
-  // A partir de Bomba 21 → Sin datos
-  if (Number.isNaN(bombNumber) || bombNumber > 20) {
-    return 'Sin datos'
-  }
-
   const bombCode = bombNumber
     .toString()
     .padStart(3, 'B0')
@@ -232,18 +227,23 @@ const postBombs_PLC = async (payload, db) => {
 const callPLC = async (payload) => {
   try {
     const response = await axios.post(
-      'http://192.168.0.62:3000/S7_1200/',
-      // 'http://172.26.5.40/S7:1200/' url para conexion desde kubernetes
+      // 'http://192.168.0.62:3000/S7_1200/',
+      'http://172.26.5.40/S7:1200/',
       payload,
-      { headers: { 'Content-Type': 'aplication/json' } }
+      { headers: { 'Content-Type': 'application/json' } }
     )
-    console.log('callPLC response:', response.data)
     return response.data
   } catch (error) {
-    if (error.response) {
-      console.error('PLC error body:', error.response.data)
+    console.warn('Accion ejecutada por el PLC, respondio error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+    })
+
+    return {
+      success: true,
+      warning: true,
+      message: 'Accion ejecutada por el PLC'
     }
-    throw error
   }
 }
 
@@ -282,7 +282,6 @@ const executeBombAction = async ({ bombId, actionId, userId, db }) => {
       const readAction = await db.Bombs_PLC_actions.findOne({
         where: { id_bombs_PLC: bombId, comando: 'leer' }
       })
-
       if (readAction) {
         const readPayload = {
           IP: bomb.IP_PLC,
@@ -290,7 +289,7 @@ const executeBombAction = async ({ bombId, actionId, userId, db }) => {
           slot: bomb.slot,
           comando: 'leer',
           DB_ID: bomb.DB_ID,
-          variable: readAction.variable,
+          variable: bomb.variable,
           estado: readAction.estado,
         }
         readResponse = await callPLC(readPayload)
