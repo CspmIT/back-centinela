@@ -66,6 +66,29 @@ const changeStatusAlarm = async (id, status, db) => {
 	}
 }
 
+//funciones auxiliares para chequear el horario de las alarmas
+const timeToMinutes = (time) => {
+	const [h, m] = time.split(':').map(Number)
+	return h * 60 + m
+}
+
+const isWithinTimeRange = (start, end) => {
+	const now = new Date()
+	const currentTime = now.toTimeString().slice(0, 5) // HH:mm
+
+	const nowMin = timeToMinutes(currentTime)
+	const startMin = timeToMinutes(start)
+	const endMin = timeToMinutes(end)
+
+	// Rango normal
+	if (startMin <= endMin) {
+		return nowMin >= startMin && nowMin <= endMin
+	}
+
+	// Cruza medianoche
+	return nowMin >= startMin || nowMin <= endMin
+}
+
 const alarmsChecked = async (user) => {
 	try {
 		const db = user.db
@@ -88,41 +111,62 @@ const alarmsChecked = async (user) => {
 		const results = []
 
 		for (const alarm of alarms) {
+
+			// ⏱ VALIDACIÓN RANGO HORARIO
+			if (alarm.hasTimeRange) {
+				if (!alarm.startime || !alarm.endtime) {
+					console.warn(`Alarma "${alarm.name}" tiene un problema en las horas que se definieron.`)
+					continue
+				}
+
+				const isInTimeWindow = isWithinTimeRange(alarm.startime, alarm.endtime)
+
+				if (!isInTimeWindow) {
+					results.push({
+						name: alarm.name,
+						type: alarm.type,
+						status: 'ok',
+						message: `Fuera del rango horario (${alarm.startime} - ${alarm.endtime})`,
+					})
+					continue 
+				}
+			}
+
 			// FUNCION AUXILIAR PARA LEER VALORES
 			const getValueForVar = async (influxVar) => {
 				if (!influxVar) return null
-			
+
 				const normalizeValue = (val) => {
 					if (typeof val === 'boolean') return val ? 1 : 0
 					if (val === 'true') return 1
 					if (val === 'false') return 0
-			
+
 					const num = Number(val)
 					return isNaN(num) ? null : num
 				}
-			
+
 				if (influxVar.type === 'history') {
 					const historyData = await getHistorcalInfluxData(influxVar, user)
 					if (!Array.isArray(historyData) || historyData.length === 0) return null
-			
+
 					const lastPoint = historyData.at(-1)
 					return normalizeValue(lastPoint?._value)
-			
+
 				} else {
 					const simpleData = await getSimpleInfluxData(influxVar, user)
 					if (!simpleData || Object.keys(simpleData).length === 0) return null
-			
+
 					// Caso: { value: ... }
 					if (typeof simpleData.value !== 'undefined') {
 						return normalizeValue(simpleData.value)
 					}
-			
+
 					// Caso: { dato_25: { value: false } }
 					const firstKey = Object.keys(simpleData)[0]
 					return normalizeValue(simpleData[firstKey]?.value)
 				}
 			}
-					
+
 
 			// LEER VALOR VARIABLE PRINCIPAL
 			const primaryValue = await getValueForVar(alarm.variable)
