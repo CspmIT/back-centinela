@@ -62,7 +62,26 @@ module.exports = (sequelize, DataTypes) => {
             secondaryValue: {
                 type: DataTypes.FLOAT,
                 allowNull: true
-            }
+            },
+            hasTimeRange: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+            },
+            startime: {
+                type: DataTypes.STRING(5), 
+                allowNull: true,
+                validate: {
+                    is: /^([01]\d|2[0-3]):([0-5]\d)$/,
+                },
+            },
+            endtime: {
+                type: DataTypes.STRING(5), 
+                allowNull: true,
+                validate: {
+                    is: /^([01]\d|2[0-3]):([0-5]\d)$/,
+                },
+            },
         },
         {
             sequelize,
