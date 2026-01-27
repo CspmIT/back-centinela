@@ -17,12 +17,52 @@ class ChartBuilder {
      */
     build(inputData) {
         const type = inputData.type
+
         const chart = {
             name: inputData.title,
             type: inputData.type,
             status: 1,
             order: inputData.order,
         }
+
+
+        if (type === 'MultipleBooleanChart') {
+            const config = []
+            const data = []
+
+            if (!Array.isArray(inputData.chartData)) {
+                throw new Error('chartData debe ser un array')
+            }
+
+            inputData.chartData.forEach((led, index) => {
+                const key = led.key || `led_${index}`
+
+                config.push(
+                    { key: `${key}.title`, value: led.title ?? '', type: 'string' },
+                    { key: `${key}.textOn`, value: led.textOn, type: 'string' },
+                    { key: `${key}.textOff`, value: led.textOff, type: 'string' },
+                    { key: `${key}.colorOn`, value: led.colorOn, type: 'string' },
+                    { key: `${key}.colorOff`, value: led.colorOff, type: 'string' }
+                )
+
+                data.push({
+                    key,
+                    value: null,
+                    source_id: led.idVar,
+                    label: led.title,
+                })
+            })
+
+            const chartObj = this.validateChart(chart)
+            const configObj = this.validateConfig(config, chart.type)
+            const dataObj = this.validateData(data, chart.type)
+            console.log('Chart:', chartObj)
+            console.log('Config:', configObj)
+            console.log('Data:', dataObj)
+
+            return { chart: chartObj, config: configObj, data: dataObj }
+        }
+
 
         const config = this.allowedConfigKeys.map((key) => {
             return {
@@ -36,14 +76,12 @@ class ChartBuilder {
         let data
 
         if (type === 'LiquidFillPorcentaje') {
-
             data = this.allowedDataKeys
                 .map((key) => {
                     const chartItem = Array.isArray(inputData.chartData)
                         ? inputData.chartData.find((item) => item.key === key)
                         : null
 
-                    // value y secondary → vienen de Influx
                     if (key === 'value' || key === 'secondary') {
                         return {
                             key,
@@ -53,7 +91,6 @@ class ChartBuilder {
                         }
                     }
 
-                    // bottom1 / bottom2 → pueden tener label + influx
                     if (key === 'bottom1' || key === 'bottom2') {
                         if (!chartItem) return null
 
@@ -65,7 +102,6 @@ class ChartBuilder {
                         }
                     }
 
-                    // maxValue, unidad, etc
                     return {
                         key,
                         value: inputData[key] ?? null,
@@ -82,26 +118,20 @@ class ChartBuilder {
                         value: null,
                         source_id: inputData['idVar'],
                     }
-                } else {
-                    // Si unidad llega vacia, me fijo si porcentaje en configuracion es true y no guardo ningun registro para unidad
-                    return {
-                        key,
-                        value: inputData[key],
-                        source_id: null,
-                    }
+                }
+
+                return {
+                    key,
+                    value: inputData[key],
+                    source_id: null,
                 }
             })
         }
 
-
-        // Validar y construir Chart
         const chartObj = this.validateChart(chart)
-
-        // Validar y construir ChartConfig
         const configObj = this.validateConfig(config, chart.type)
-
-        // Validar y construir ChartData
         const dataObj = this.validateData(data, chart.type)
+
 
         return { chart: chartObj, config: configObj, data: dataObj }
     }
@@ -132,22 +162,25 @@ class ChartBuilder {
      */
     validateConfig(config, chartType) {
         const allowedConfigKeys = this.allowedConfigKeys
-        const configArray = config.reduce((acc, val) => {
-            if (!allowedConfigKeys.includes(val.key)) {
-                throw new Error(
-                    `La clave '${val.keyConfig}' no está permitida para la configuracion el gráfico de tipo '${chartType}'.`
-                )
+
+        return config.map((val) => {
+            // 🟢 MultipleBooleanChart → claves dinámicas permitidas
+            if (chartType !== 'MultipleBooleanChart') {
+                if (!allowedConfigKeys.includes(val.key)) {
+                    throw new Error(
+                        `La clave '${val.keyConfig}' no está permitida para la configuración del gráfico de tipo '${chartType}'.`
+                    )
+                }
             }
-            acc.push({
+
+            return {
                 key: val.key,
                 value: val.value,
                 type: typeof val.value,
-            })
-            return acc
-        }, [])
-
-        return configArray
+            }
+        })
     }
+
 
     /**
      * Valida el objeto ChartData.
@@ -157,34 +190,36 @@ class ChartBuilder {
     validateData(data, chartType) {
         const allowedDataKeys = this.allowedDataKeys
 
-        const dataArray = data.reduce((acc, item) => {
+        return data.map((item) => {
             const { key, value, source_id, label } = item
 
             if (!key) {
                 throw new Error("Cada objeto de 'data' debe contener 'key'.")
             }
 
-            if (!allowedDataKeys.includes(key)) {
-                throw new Error(
-                    `La clave '${key}' no está permitida para los datos.`
-                )
+            // 🟢 MultipleBooleanChart → key libre (led_x)
+            if (chartType !== 'MultipleBooleanChart') {
+                if (!allowedDataKeys.includes(key)) {
+                    throw new Error(
+                        `La clave '${key}' no está permitida para los datos.`
+                    )
+                }
             }
 
             /* ===============================
                LÓGICA ESPECIAL – LiquidFill
             ================================ */
             if (chartType === 'LiquidFillPorcentaje') {
-                acc.push({
+                return {
                     key,
                     value: value ?? null,
                     source_id: source_id ?? null,
                     label: label ?? key,
-                })
-                return acc
+                }
             }
 
             /* ===============================
-               LÓGICA GENERAL – resto de gráficos
+               LÓGICA GENERAL
             ================================ */
             if (value && source_id) {
                 throw new Error(
@@ -192,17 +227,13 @@ class ChartBuilder {
                 )
             }
 
-            acc.push({
+            return {
                 key,
                 value: value ?? null,
                 source_id: source_id ?? null,
-                label: key,
-            })
-
-            return acc
-        }, [])
-
-        return dataArray
+                label: label ?? key,
+            }
+        })
     }
 }
 

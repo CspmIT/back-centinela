@@ -3,6 +3,7 @@ const {
     CirclePorcentajeSchema,
 } = require('../schemas/charts/CirclePorcentaje.Schema')
 const GaugeSpeedSchema = require('../schemas/charts/GaugeSpeed.Schema')
+const { MultipleBooleanChartSchema } = require('../schemas/charts/MultipleBooleanChart.Schema')
 const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
 const { ChartService } = require('../services/ChartService')
 const ChartBuilder = require('../utils/js/chartBuilder')
@@ -56,7 +57,6 @@ const createChart = async (req, res) => {
             throw new Error('Type is required')
         }
         const { autorizedConfigKeys, autorizedDataKeys } = getKeys(type)
-        baseChart.order = parseInt(baseChart.order)
         const validChart = validationsTypes[type].safeParse(baseChart)
         if (!validChart.success) {
             console.log(validChart.error.issues)
@@ -133,12 +133,14 @@ const getKeys = (type) => {
         CirclePorcentaje: ['color', 'title'],
         GaugeSpeed: ['color', 'title', 'description', 'description2'],
         BooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
+        MultipleBooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
     }
     const autorizedDataKeys = {
         LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2'],
         CirclePorcentaje: ['maxValue', 'value'],
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
         BooleanChart: ['value'],
+        MultipleBooleanChart: ['value'],
     }
     return {
         autorizedConfigKeys: autorizedConfigKeys[type],
@@ -168,6 +170,7 @@ const validationsTypes = {
     CirclePorcentaje: CirclePorcentajeSchema,
     GaugeSpeed: GaugeSpeedSchema,
     BooleanChart: BooleanChartSchema,
+    MultipleBooleanChart: MultipleBooleanChartSchema,
 }
 
 module.exports = {
