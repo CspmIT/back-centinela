@@ -56,11 +56,109 @@ class ChartBuilder {
             const chartObj = this.validateChart(chart)
             const configObj = this.validateConfig(config, chart.type)
             const dataObj = this.validateData(data, chart.type)
-            console.log('Chart:', chartObj)
-            console.log('Config:', configObj)
-            console.log('Data:', dataObj)
 
             return { chart: chartObj, config: configObj, data: dataObj }
+        }
+
+        if (type === 'BoardChart') {
+            if (!Array.isArray(inputData.chartConfig)) {
+                throw new Error('chartConfig debe ser un array para BoardChart')
+            }
+
+            const chartObj = this.validateChart(chart)
+
+            const configObj = []
+            const roomTemp = {}
+            const pumpingTemp = {}
+            const dataObj = []
+
+            inputData.chartConfig.forEach((c) => {
+                if (!c.key) return
+
+                /* =========================
+                   CONFIG (solo estructura)
+                ========================== */
+                if (
+                    c.key === 'board.top.leftChartId' ||
+                    c.key === 'board.top.rightChartId'
+                ) {
+                    configObj.push({
+                        key: c.key,
+                        value: c.value,
+                        type: c.type ?? typeof c.value,
+                    })
+                    return
+                }
+
+                /* =========================
+                    PUMPING → ACUMULAR
+                ========================== */
+                if (c.key.startsWith('board.pumping.')) {
+                    const match = c.key.match(/(board\.pumping\.[^.]+)\.(key|label)$/)
+                    if (!match) return
+
+                    const baseKey = match[1]
+                    const field = match[2]
+
+                    pumpingTemp[baseKey] ??= {
+                        key: baseKey,
+                        source_id: null,
+                        label: 'value',
+                    }
+
+                    if (field === 'key') pumpingTemp[baseKey].source_id = String(c.value)
+                    if (field === 'label') pumpingTemp[baseKey].label = c.value
+
+                    return
+                }
+
+                /* =========================
+                   ROOM → ACUMULAR
+                ========================== */
+                if (c.key.startsWith('board.room.item')) {
+                    const match = c.key.match(/(board\.room\.item\d+)\.(key|label)/)
+                    if (!match) return
+
+                    const baseKey = match[1]
+                    const field = match[2]
+
+                    roomTemp[baseKey] ??= {
+                        key: baseKey,
+                        source_id: null,
+                        label: 'value',
+                    }
+
+                    if (field === 'key') roomTemp[baseKey].source_id = c.value
+                    if (field === 'label') roomTemp[baseKey].label = c.value
+                }
+            })
+
+            /* =========================
+            AGREGAR PUMPING ITEMS
+            ========================== */
+            Object.values(pumpingTemp).forEach((item) => {
+                if (item.source_id) {
+                    dataObj.push(item)
+                }
+            })
+            /* =========================
+               AGREGAR ROOM ITEMS
+            ========================== */
+            Object.values(roomTemp).forEach((item) => {
+                if (item.source_id) {
+                    dataObj.push(item)
+                }
+            })
+
+            console.log('chart:', chartObj)
+            console.log('config:', configObj)
+            console.log('data:', dataObj)
+
+            return {
+                chart: chartObj,
+                config: configObj,
+                data: dataObj,
+            }
         }
 
 
@@ -164,7 +262,6 @@ class ChartBuilder {
         const allowedConfigKeys = this.allowedConfigKeys
 
         return config.map((val) => {
-            // 🟢 MultipleBooleanChart → claves dinámicas permitidas
             if (chartType !== 'MultipleBooleanChart') {
                 if (!allowedConfigKeys.includes(val.key)) {
                     throw new Error(

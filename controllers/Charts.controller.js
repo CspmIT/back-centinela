@@ -4,6 +4,7 @@ const {
 } = require('../schemas/charts/CirclePorcentaje.Schema')
 const GaugeSpeedSchema = require('../schemas/charts/GaugeSpeed.Schema')
 const { MultipleBooleanChartSchema } = require('../schemas/charts/MultipleBooleanChart.Schema')
+const { BoardChartSchema } = require('../schemas/charts/BoardChart.Schema')
 const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
 const { ChartService } = require('../services/ChartService')
 const ChartBuilder = require('../utils/js/chartBuilder')
@@ -121,6 +122,15 @@ const editChart = async (req, res) => {
     }
 }
 
+const findBoards = async (req, res) => {
+    try {
+        const boards = await ChartService.getBoards(req.db)
+        res.status(200).json(boards)
+    } catch (error) {   
+        res.status(400).json({ message: error.message })
+    }
+}
+
 const getKeys = (type) => {
     const autorizedConfigKeys = {
         LiquidFillPorcentaje: [
@@ -134,6 +144,7 @@ const getKeys = (type) => {
         GaugeSpeed: ['color', 'title', 'description', 'description2'],
         BooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
         MultipleBooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
+        BoardChart: ['title'],
     }
     const autorizedDataKeys = {
         LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2'],
@@ -141,6 +152,7 @@ const getKeys = (type) => {
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
         BooleanChart: ['value'],
         MultipleBooleanChart: ['value'],
+        BoardChart: ['value'],
     }
     return {
         autorizedConfigKeys: autorizedConfigKeys[type],
@@ -171,6 +183,7 @@ const validationsTypes = {
     GaugeSpeed: GaugeSpeedSchema,
     BooleanChart: BooleanChartSchema,
     MultipleBooleanChart: MultipleBooleanChartSchema,
+    BoardChart: BoardChartSchema,
 }
 
 module.exports = {
@@ -181,4 +194,5 @@ module.exports = {
     statusChart,
     findChartById,
     editChart,
+    findBoards,
 }
