@@ -195,7 +195,7 @@ async function getMultipleHistoricalInfluxData(queryObject, user) {
       ${rangeClause}
       |> filter(fn: (r) => ${topics.map(t => `r.topic == "${t}"`).join(' or ')})
       |> filter(fn: (r) => ${fields.map(f => `r._field == "${f}"`).join(' or ')})
-      |> aggregateWindow( every: ${first.samplingPeriod}, fn: ${aggregationFn}, createEmpty: false)
+      |> aggregateWindow( every: ${first.samplingPeriod}, fn: ${aggregationFn}, createEmpty: true)
       |> yield(name: "${aggregationFn}")
     `
     const rawData = await ConsultaInflux(batchQuery, influxName)

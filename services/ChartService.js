@@ -1,4 +1,4 @@
-const { Op, literal } = require('sequelize')
+const { Op, literal, where } = require('sequelize')
 
 class ChartService {
     static async getSimpleCharts(db) {
@@ -116,6 +116,17 @@ class ChartService {
         try {
             const charts = await db.Chart.findAll()
             return charts
+        } catch (error) {
+            throw error
+        }
+    }
+
+    static async getBoards(db) {
+        try {
+            const boards = await db.Chart.findAll({
+                where: { type: 'BoardChart', status: 1 },
+            })
+            return boards
         } catch (error) {
             throw error
         }

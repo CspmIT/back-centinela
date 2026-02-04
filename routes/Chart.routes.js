@@ -7,6 +7,7 @@ const {
     findChartById,
     editChart,
     findDashboardCharts,
+    findBoards
 } = require('../controllers/Charts.controller')
 const { verifyToken } = require('../middleware/Auth.middleware')
 
@@ -17,5 +18,6 @@ routes.get('/allCharts', verifyToken, findAllCharts)
 routes.post('/charts', verifyToken, createChart)
 routes.post('/charts/:id', verifyToken, editChart)
 routes.put('/charts/status', verifyToken, statusChart)
+routes.get('/boards', verifyToken, findBoards)
 
 module.exports = routes
