@@ -5,7 +5,7 @@ const path = require('path')
 const Sequelize = require('sequelize')
 const process = require('process')
 const basename = path.basename(__filename)
-const env = process.env.DATABASE || 'masagua'
+const env = process.env.DATABASE || 'centinela'
 
 const baseConfig = require('../config/config.js')[env]
 
@@ -19,7 +19,6 @@ const getTenantDb = async (tenantKey = null) => {
 
 	// Si ya existe, lo devolvemos
 	if (tenants[key]) return tenants[key]
-
 	// Clonar configuración para NO afectar global config
 	const tenantConfig = {
 		...baseConfig,
