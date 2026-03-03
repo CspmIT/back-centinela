@@ -10,6 +10,8 @@ const {
 	savePermission,
 	getProfiles,
 	getListUserPass,
+	getPermissionByMenu,
+	postPermissionByMenu
 } = require('../controllers/User.controller')
 const router = express.Router()
 
@@ -24,6 +26,8 @@ router.post('/saveMenu', verifyToken, abmMenu)
 router.post('/deleteMenu', verifyToken, deleteMenu)
 
 router.get('/getPermission', verifyToken, getPermission)
+router.get('/getPermissionByMenu', verifyToken, getPermissionByMenu)
+router.post('/postPermissionByMenu', verifyToken, postPermissionByMenu)
 router.post('/savePermission', verifyToken, savePermission)
 
 module.exports = router

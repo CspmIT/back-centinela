@@ -4,6 +4,8 @@ const {
     saveMenu,
     listPermissionUser,
     saveMenu_Selected,
+    getPermissionByMenuService,
+    postPermissionByMenuService
 } = require('../services/MenuService')
 const {
     getAllUser,
@@ -81,32 +83,40 @@ async function abmMenu(req, res) {
 async function deleteMenu(req, res) {
     let transaction
     try {
-        const db = req.db
-        // Inicia la transacción
-        transaction = await db.sequelize.transaction()
-        let Menu = true
-        for (const element of req.body) {
-            // Validaciones previas
-            if (!element.name || !element.level || !element.group_menu) {
-                return res.status(400).json({
-                    message: 'Se solicita completar todos los campos.',
-                })
+            const db = req.db
+            // Inicia la transacción
+            transaction = await db.sequelize.transaction()
+            let Menu = null
+            for (const element of req.body) {
+                // Validaciones mínimas
+                if (!element.id) {
+                    throw new Error('ID de menú requerido para eliminar')
+                }
+
+                // Soft delete (status = 0)
+                const payload = {
+                    ...element,
+                    status: 0
+                }
+
+                Menu = await saveMenu(payload, transaction, db)
+                if (!Menu) throw new Error('Error al guardar la contraseña.')
             }
-            Menu = await saveMenu(element, transaction)
-            if (!Menu) throw new Error('Error al guardar la contraseña.')
-        }
-        // Si todo está bien, se confirma la transacción
-        await transaction.commit()
-        res.status(200).json(Menu)
-    } catch (error) {
-        // Si ocurre algún error, se revierte la transacción
+            // Si todo está bien, se confirma la transacción
+            await transaction.commit()
+            return res.status(200).json({
+                ok: true,
+                data: Menu
+            })
+        } catch (error) {
         if (transaction) await transaction.rollback()
-        // Manejo de errores
-        if (error.errors) {
-            return res.status(500).json({ errors: error.errors })
-        } else {
-            return res.status(400).json({ message: error.message })
-        }
+       
+        console.error('deleteMenu error:', error)
+        
+        return res.status(500).json({
+			ok: false,
+			message: error.message || 'Error al eliminar menú'
+		})
     }
 }
 
@@ -174,6 +184,80 @@ async function savePermission(req, res) {
     }
 }
 
+const getPermissionByMenu = async (req, res) => {
+    try {
+        const { id_menu } = req.query
+
+        if (!id_menu) {
+            return res.status(400).json({
+                ok: false,
+                message: 'id_menu es requerido',
+            })
+        }
+
+        const data = await getPermissionByMenuService(id_menu, req.db)
+
+        return res.json({
+            ok: true,
+            data,
+        })
+    } catch (error) {
+        console.error('getPermissionByMenuController error:', error)
+        return res.status(500).json({
+            ok: false,
+            message: 'Error obteniendo permisos del menú',
+        })
+    }
+}
+
+async function postPermissionByMenu(req, res) {
+    let transaction
+    try {
+        const db = req.db
+        const { id_menu, profiles } = req.body
+
+        // Validaciones
+        if (!id_menu) {
+            return res.status(400).json({
+                ok: false,
+                message: 'id_menu es obligatorio',
+            })
+        }
+
+        if (!Array.isArray(profiles)) {
+            return res.status(400).json({
+                ok: false,
+                message: 'profiles debe ser un array de id_profile',
+            })
+        }
+
+        transaction = await db.sequelize.transaction()
+
+        const result = await postPermissionByMenuService(
+            { id_menu, profiles },
+            transaction,
+            db
+        )
+
+        await transaction.commit()
+
+        return res.status(200).json({
+            ok: true,
+            data: result,
+        })
+    } catch (error) {
+        if (transaction) await transaction.rollback()
+
+        console.error('postPermissionByMenu error:', error)
+
+        return res.status(500).json({
+            ok: false,
+            message: error.message || 'Error al guardar permisos',
+        })
+    }
+}
+
+
 module.exports = {
     getListUser,
     getProfiles,
@@ -183,4 +267,6 @@ module.exports = {
     getPermission,
     savePermission,
     getListUserPass,
+    getPermissionByMenu,
+    postPermissionByMenu
 }
