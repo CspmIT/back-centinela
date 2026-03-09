@@ -55,24 +55,20 @@ async function getAllMenu(req, res) {
 async function abmMenu(req, res) {
     let transaction
     try {
-        db = req.db
-        // Inicia la transacción
+        const db = req.db
         transaction = await db.sequelize.transaction()
-        // Validaciones previas
-        if (!req.body.name || !req.body.level || !req.body.group_menu) {
+        if (!req.body.name || !req.body.level) {
             return res
                 .status(400)
                 .json({ message: 'Se solicita completar todos los campos.' })
         }
         const Menu = await saveMenu(req.body, transaction, req.db)
         if (!Menu) throw new Error('Error al guardar la contraseña.')
-        // Si todo está bien, se confirma la transacción
+
         await transaction.commit()
         res.status(200).json(Menu)
     } catch (error) {
-        // Si ocurre algún error, se revierte la transacción
         if (transaction) await transaction.rollback()
-        // Manejo de errores
         if (error.errors) {
             return res.status(500).json({ errors: error.errors })
         } else {
@@ -80,6 +76,7 @@ async function abmMenu(req, res) {
         }
     }
 }
+
 async function deleteMenu(req, res) {
     let transaction
     try {

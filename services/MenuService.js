@@ -33,24 +33,47 @@ const getMenus = async (db) => {
  */
 const saveMenu = async (dataMenu, transaction, db) => {
     try {
-        if (!dataMenu.id) {
-			const lastOrder = await db.Menu.max('order', { transaction })
-
-			dataMenu.order = (lastOrder ?? 0) + 1
-		}
-
-        const [Menu, created] = await db.Menu.findOrCreate({
-			where: { id: dataMenu.id },
-			defaults: { ...dataMenu },
-			transaction,
-		})
-
-        if (!created) {
-			await Menu.update(dataMenu, { transaction })
-		}
-
-		return Menu
-
+ 
+        let menu
+        
+        // Crea nuevo menú
+        if (!dataMenu.id || dataMenu.id === 0) {
+ 
+            const lastOrder = await db.Menu.max('order', { transaction })
+            const order = lastOrder ? lastOrder + 1 : 1
+ 
+            const groupMenu = dataMenu.group_menu ?? 0
+ 
+            menu = await db.Menu.create(
+                {
+                    ...dataMenu,
+                    order,
+                    group_menu: groupMenu
+                },
+                { transaction }
+            )
+ 
+            if (!dataMenu.sub_menu) {
+                await menu.update(
+                    { group_menu: menu.id },
+                    { transaction }
+                )
+            }
+ 
+        }else {
+ 
+            menu = await db.Menu.findByPk(dataMenu.id, { transaction })
+ 
+            if (!menu) {
+                throw new Error('Menú no encontrado')
+            }
+ 
+            await menu.update(dataMenu, { transaction })
+ 
+        }
+ 
+        return menu
+ 
     } catch (error) {
         throw error
     }
