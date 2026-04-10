@@ -72,6 +72,13 @@ class ChartService {
                         required: false,
                         include: [{ association: 'InfluxVars' }],
                     },
+                    {
+                        model: db.ChartProfile,
+                        as: 'ChartProfiles',
+                        where: { profile_id: profile },
+                        attributes: [],
+                        required: true
+                    }
                 ],
                 order: [['order', 'ASC']],
             })
@@ -114,7 +121,17 @@ class ChartService {
 
     static async getAllCharts(db) {
         try {
-            const charts = await db.Chart.findAll()
+            const charts = await db.Chart.findAll({
+                include: [
+                    {
+                        model: db.ChartProfile,
+                        as: 'ChartProfiles',
+                        attributes: ['profile_id'],
+                        required: false  // LEFT JOIN: trae también charts sin perfiles asignados
+                    }
+                ],
+                order: [['id', 'ASC']]
+            })
             return charts
         } catch (error) {
             throw error
@@ -127,6 +144,50 @@ class ChartService {
                 where: { type: 'BoardChart', status: 1 },
             })
             return boards
+        } catch (error) {
+            throw error
+        }
+    }
+
+    static async getChartsByUser(userId, db) {
+        try {
+            // Obtener el perfil del usuario
+            const user = await db.User.findByPk(userId, {
+                attributes: ['profile']
+            })
+
+            if (!user) throw new Error('Usuario no encontrado')
+
+            // Charts que el usuario ya tiene visibles (a excluir)
+            const visibleLayouts = await db.UserDashboardLayout.findAll({
+                where: { user_id: parseInt(userId), visible: true },
+                attributes: ['chart_id'],
+                raw: true
+            })
+
+            const visibleChartIds = visibleLayouts.map(l => l.chart_id)
+
+            // Charts activos, permitidos para el perfil del usuario y que no estén ya en su dashboard
+            const charts = await db.Chart.findAll({
+                where: {
+                    status: 1,
+                    ...(visibleChartIds.length > 0 && {
+                        id: { [Op.notIn]: visibleChartIds }
+                    })
+                },
+                attributes: ['id', 'name', 'type'],
+                include: [
+                    {
+                        model: db.ChartProfile,
+                        as: 'ChartProfiles',
+                        where: { profile_id: user.profile },
+                        attributes: [],
+                        required: true
+                    }
+                ]
+            })
+
+            return charts
         } catch (error) {
             throw error
         }
@@ -153,6 +214,12 @@ class ChartService {
                 return { ...data, chart_id: newChart.id }
             })
             await db.ChartData.bulkCreate(newChartData, { transaction: t })
+
+            const allProfiles = await db.Profile.findAll({ attributes: ['id'], raw: true })
+            await db.ChartProfile.bulkCreate(
+                allProfiles.map(p => ({ chart_id: newChart.id, profile_id: p.id })),
+                { transaction: t }
+            )
 
             t.commit()
             return newChart
@@ -220,6 +287,12 @@ class ChartService {
             await db.ChartSeriesData.bulkCreate(newChartSeriesData, {
                 transaction: t,
             })
+
+            const allProfiles = await db.Profile.findAll({ attributes: ['id'], raw: true })
+            await db.ChartProfile.bulkCreate(
+                allProfiles.map(p => ({ chart_id: newChart.id, profile_id: p.id })),
+                { transaction: t }
+            )
 
             t.commit()
             return newChart
@@ -306,6 +379,12 @@ class ChartService {
                 return { ...data, chartId: newChart.id }
             })
             await db.BombsData.bulkCreate(newBombsData, { transaction: t })
+
+            const allProfiles = await db.Profile.findAll({ attributes: ['id'], raw: true })
+            await db.ChartProfile.bulkCreate(
+                allProfiles.map(p => ({ chart_id: newChart.id, profile_id: p.id })),
+                { transaction: t }
+            )
 
             t.commit()
             return newChart

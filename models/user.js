@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
 		static associate(models) {
 			// define association here
 			this.hasMany(models.Menu_selected, { foreignKey: 'id', targetKey: 'id_user', as: 'Menu' })
+			this.hasMany(models.UserDashboardLayout, {
+				foreignKey: 'user_id',
+				as: 'DashboardLayouts',
+			})
 		}
 	}
 	User.init(

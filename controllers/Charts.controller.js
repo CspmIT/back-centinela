@@ -50,6 +50,16 @@ const findAllCharts = async (req, res) => {
     }
 }
 
+const findChartByUser = async (req, res) => {
+    try {
+        const { userId } = req.params
+        const charts = await ChartService.getChartsByUser(userId, req.db)
+        res.status(200).json(charts)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
 const createChart = async (req, res) => {
     try {
         const baseChart = req.body
@@ -177,6 +187,46 @@ const statusChart = async (req, res) => {
     }
 }
 
+const getProfilesByChart = async (req, res) => {
+    try {
+        const { chartId } = req.params
+        const assignments = await req.db.ChartProfile.findAll({
+            where: { chart_id: chartId },
+            attributes: ['profile_id'],
+            raw: true
+        })
+        res.status(200).json(assignments.map(a => a.profile_id))
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+const setProfilesByChart = async (req, res) => {
+    const transaction = await req.db.sequelize.transaction()
+    try {
+        const { chartId } = req.params
+        const { profileIds } = req.body 
+
+        await req.db.ChartProfile.destroy({
+            where: { chart_id: chartId },
+            transaction
+        })
+
+        if (profileIds.length > 0) {
+            await req.db.ChartProfile.bulkCreate(
+                profileIds.map(profile_id => ({ chart_id: chartId, profile_id })),
+                { transaction }
+            )
+        }
+
+        await transaction.commit()
+        res.status(200).json({ ok: true })
+    } catch (error) {
+        await transaction.rollback()
+        res.status(400).json({ message: error.message })
+    }
+}
+
 const validationsTypes = {
     LiquidFillPorcentaje: LiquidFillSchema,
     CirclePorcentaje: CirclePorcentajeSchema,
@@ -195,4 +245,7 @@ module.exports = {
     findChartById,
     editChart,
     findBoards,
+    findChartByUser,
+    getProfilesByChart,
+    setProfilesByChart
 }
