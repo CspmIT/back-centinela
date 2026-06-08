@@ -17,6 +17,7 @@ const ChartSeries = require('./routes/ChartSeries.routes')
 const ChartPie = require('./routes/ChartPie.routes')
 const Alarms = require('./routes/Alarms.routes')
 const ExternalUsers = require('./routes/ExternalUsers.routes')
+const DashboardRoutes = require('./routes/Dashboard.routes')
 // Configuracion para los cors
 const corsConfig = require('./config/app.conf')
 app.use(corsConfig)
@@ -39,6 +40,7 @@ app.use('/api', ChartSeries)
 app.use('/api', ChartPie)
 app.use('/api', Alarms)
 app.use('/api', ExternalUsers)
+app.use('/api', DashboardRoutes)
 
 // const server = http.createServer(app)
 // app.use('/api', async (req, res, next) => {
