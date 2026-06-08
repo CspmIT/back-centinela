@@ -159,7 +159,7 @@ const getKeys = (type) => {
         BoardChart: ['title'],
     }
     const autorizedDataKeys = {
-        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2'],
+        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2', 'bottom3', 'bottom4', 'bottom5', 'bottom6'],
         CirclePorcentaje: ['maxValue', 'value'],
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
         BooleanChart: ['value'],
