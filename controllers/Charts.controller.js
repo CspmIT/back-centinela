@@ -20,7 +20,9 @@ const findIndicatorCharts = async (req, res) => {
 
 const findDashboardCharts = async (req, res) => {
     try {
-        const charts = await ChartService.getDashboardCharts(req.db)
+        profile = req.user.profile
+        console.log('Perfil del usuario:', profile)
+        const charts = await ChartService.getDashboardCharts(req.db, profile)
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })

@@ -41,7 +41,7 @@ class ChartService {
         }
     }
 
-    static async getDashboardCharts(db) {
+    static async getDashboardCharts(db, profile) {
         try {
             const charts = await db.Chart.findAll({
                 where: {
