@@ -3,6 +3,7 @@ const {
     CirclePorcentajeSchema,
 } = require('../schemas/charts/CirclePorcentaje.Schema')
 const GaugeSpeedSchema = require('../schemas/charts/GaugeSpeed.Schema')
+const GaugeTemperatureSchema = require('../schemas/charts/GaugeTemperature.Schema')
 const { MultipleBooleanChartSchema } = require('../schemas/charts/MultipleBooleanChart.Schema')
 const { BoardChartSchema } = require('../schemas/charts/BoardChart.Schema')
 const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
@@ -154,6 +155,7 @@ const getKeys = (type) => {
         ],
         CirclePorcentaje: ['color', 'title'],
         GaugeSpeed: ['color', 'title', 'description', 'description2'],
+        GaugeTemperature: ['color', 'title', 'description', 'description2'],
         BooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
         MultipleBooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
         BoardChart: ['title'],
@@ -162,6 +164,7 @@ const getKeys = (type) => {
         LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2', 'bottom3', 'bottom4', 'bottom5', 'bottom6'],
         CirclePorcentaje: ['maxValue', 'value'],
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
+        GaugeTemperature: ['maxValue', 'minValue', 'value', 'unidad'],
         BooleanChart: ['value'],
         MultipleBooleanChart: ['value'],
         BoardChart: ['value'],
@@ -233,6 +236,7 @@ const validationsTypes = {
     LiquidFillPorcentaje: LiquidFillSchema,
     CirclePorcentaje: CirclePorcentajeSchema,
     GaugeSpeed: GaugeSpeedSchema,
+    GaugeTemperature: GaugeTemperatureSchema,
     BooleanChart: BooleanChartSchema,
     MultipleBooleanChart: MultipleBooleanChartSchema,
     BoardChart: BoardChartSchema,

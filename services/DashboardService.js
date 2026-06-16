@@ -2,6 +2,7 @@ const CHART_DIMENSIONS = {
     LiquidFillPorcentaje: { w: 2, h: 3 },
     CirclePorcentaje:     { w: 2, h: 3 },
     GaugeSpeed:           { w: 2, h: 3 },
+    GaugeTemperature:     { w: 2, h: 3 },
     BooleanChart:         { w: 2, h: 3 },
     MultipleBooleanChart: { w: 4, h: 3 },
     DoughnutChart:        { w: 2, h: 3 },
