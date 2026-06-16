@@ -3,6 +3,7 @@ const {
     CirclePorcentajeSchema,
 } = require('../schemas/charts/CirclePorcentaje.Schema')
 const GaugeSpeedSchema = require('../schemas/charts/GaugeSpeed.Schema')
+const GaugeTemperatureSchema = require('../schemas/charts/GaugeTemperature.Schema')
 const { MultipleBooleanChartSchema } = require('../schemas/charts/MultipleBooleanChart.Schema')
 const { BoardChartSchema } = require('../schemas/charts/BoardChart.Schema')
 const { LiquidFillSchema } = require('../schemas/charts/LiquidFill.Schema')
@@ -20,7 +21,9 @@ const findIndicatorCharts = async (req, res) => {
 
 const findDashboardCharts = async (req, res) => {
     try {
-        const charts = await ChartService.getDashboardCharts(req.db)
+        profile = req.user.profile
+        console.log('Perfil del usuario:', profile)
+        const charts = await ChartService.getDashboardCharts(req.db, profile)
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -44,6 +47,16 @@ const findChartById = async (req, res) => {
 const findAllCharts = async (req, res) => {
     try {
         const charts = await ChartService.getAllCharts(req.db)
+        res.status(200).json(charts)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+const findChartByUser = async (req, res) => {
+    try {
+        const { userId } = req.params
+        const charts = await ChartService.getChartsByUser(userId, req.db)
         res.status(200).json(charts)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -142,14 +155,16 @@ const getKeys = (type) => {
         ],
         CirclePorcentaje: ['color', 'title'],
         GaugeSpeed: ['color', 'title', 'description', 'description2'],
+        GaugeTemperature: ['color', 'title', 'description', 'description2'],
         BooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
         MultipleBooleanChart: ['title', 'textOn', 'textOff', 'colorOn', 'colorOff'],
         BoardChart: ['title'],
     }
     const autorizedDataKeys = {
-        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2'],
+        LiquidFillPorcentaje: ['maxValue', 'value', 'unidad', 'secondary', 'bottom1', 'bottom2', 'bottom3', 'bottom4', 'bottom5', 'bottom6'],
         CirclePorcentaje: ['maxValue', 'value'],
         GaugeSpeed: ['maxValue', 'value', 'unidad'],
+        GaugeTemperature: ['maxValue', 'minValue', 'value', 'unidad'],
         BooleanChart: ['value'],
         MultipleBooleanChart: ['value'],
         BoardChart: ['value'],
@@ -177,10 +192,51 @@ const statusChart = async (req, res) => {
     }
 }
 
+const getProfilesByChart = async (req, res) => {
+    try {
+        const { chartId } = req.params
+        const assignments = await req.db.ChartProfile.findAll({
+            where: { chart_id: chartId },
+            attributes: ['profile_id'],
+            raw: true
+        })
+        res.status(200).json(assignments.map(a => a.profile_id))
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+const setProfilesByChart = async (req, res) => {
+    const transaction = await req.db.sequelize.transaction()
+    try {
+        const { chartId } = req.params
+        const { profileIds } = req.body 
+
+        await req.db.ChartProfile.destroy({
+            where: { chart_id: chartId },
+            transaction
+        })
+
+        if (profileIds.length > 0) {
+            await req.db.ChartProfile.bulkCreate(
+                profileIds.map(profile_id => ({ chart_id: chartId, profile_id })),
+                { transaction }
+            )
+        }
+
+        await transaction.commit()
+        res.status(200).json({ ok: true })
+    } catch (error) {
+        await transaction.rollback()
+        res.status(400).json({ message: error.message })
+    }
+}
+
 const validationsTypes = {
     LiquidFillPorcentaje: LiquidFillSchema,
     CirclePorcentaje: CirclePorcentajeSchema,
     GaugeSpeed: GaugeSpeedSchema,
+    GaugeTemperature: GaugeTemperatureSchema,
     BooleanChart: BooleanChartSchema,
     MultipleBooleanChart: MultipleBooleanChartSchema,
     BoardChart: BoardChartSchema,
@@ -195,4 +251,7 @@ module.exports = {
     findChartById,
     editChart,
     findBoards,
+    findChartByUser,
+    getProfilesByChart,
+    setProfilesByChart
 }

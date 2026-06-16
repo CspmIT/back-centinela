@@ -21,6 +21,7 @@ const verifyToken = async (req, res, next) => {
 			id: user.id,
 			influx_name: decoded.influx_name,
 			name_coop: decoded.nameApp,
+			profile: user.profile
 		}
 
 		next()

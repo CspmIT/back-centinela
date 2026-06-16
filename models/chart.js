@@ -25,6 +25,19 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: 'chart_id',
                 as: 'ChartPieData',
             })
+            this.hasMany(models.UserDashboardLayout, {
+                foreignKey: 'chart_id',
+                as: 'DashboardLayouts',
+            })
+            this.belongsToMany(models.Profile, {
+                through: models.ChartProfile,
+                foreignKey: 'chart_id',
+                as: 'Profiles'
+            })
+            this.hasMany(models.ChartProfile, {
+                foreignKey: 'chart_id',
+                as: 'ChartProfiles'
+            })
         }
     }
 
