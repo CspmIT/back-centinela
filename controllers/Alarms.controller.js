@@ -85,13 +85,13 @@ const publicCheckAlarms = async (req, res) => {
   try {
     const { schemaName } = req.query
 
-    let schemasToCheck = schemaName ? [schemaName] : listClients.map(client => `masagua_${client}`)
+    let schemasToCheck = schemaName ? [schemaName] : listClients.map(client => `centinela_${client}`)
 
     const results = []
 
     for (const schema of schemasToCheck) {
       try {
-        const clientKey = schema.replace('masagua_', '')
+        const clientKey = schema.replace('centinela_', '')
         const influx_name = influxByClient[clientKey] 
 
         if (!influx_name) {
