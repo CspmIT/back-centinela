@@ -7,6 +7,7 @@ const CHART_DIMENSIONS = {
     MultipleBooleanChart: { w: 4, h: 3 },
     DoughnutChart:        { w: 2, h: 3 },
     PumpControl:          { w: 3, h: 3 },
+    SmartOutlet:          { w: 4, h: 4 },
     default:              { w: 2, h: 3 },
 }
 
